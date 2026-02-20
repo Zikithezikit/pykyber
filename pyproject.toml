@@ -13,4 +13,5 @@ classifiers = [
 dynamic = ["version"]
 
 [tool.maturin]
-include = ["pykyber.pyi"]
+python-source = "python"
+module-name = "pykyber._pykyber"
