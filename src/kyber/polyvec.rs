@@ -81,9 +81,9 @@ pub fn polyvec_invntt_tomont(r: &mut Polyvec) {
 
 pub fn polyvec_basemul_acc_montgomery(r: &mut Poly, a: &Polyvec, b: &Polyvec) {
     let mut t = Poly::new();
-    poly_basemul(r, &a.vec[0], &b.vec[0]);
+    poly_base_multiply(r, &a.vec[0], &b.vec[0]);
     for i in 1..KYBER_K {
-        poly_basemul(&mut t, &a.vec[i], &b.vec[i]);
+        poly_base_multiply(&mut t, &a.vec[i], &b.vec[i]);
         poly_add(r, &t);
     }
     poly_reduce(r);

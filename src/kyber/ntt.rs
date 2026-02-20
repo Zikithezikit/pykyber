@@ -1,5 +1,7 @@
 use super::reduce::*;
 
+/// Twiddle factors (primitive roots of unity) used in the Number Theoretic Transform.
+/// These are Montgomery-friendly constants precomputed for the Kyber polynomial ring.
 pub const ZETAS: [i16; 128] = [
     -1044, -758, -359, -1517, 1493, 1422, 287, 202, -171, 622, 1577, 182, 962, -1202, -1474, 1468,
     573, -1325, 264, 383, -829, 1458, -1602, -130, -681, 1017, 732, 608, -1542, 411, -205, -1571,
@@ -11,67 +13,78 @@ pub const ZETAS: [i16; 128] = [
     -1530, -1278, 794, -1510, -854, -870, 478, -108, -308, 996, 991, 958, -1460, 1522, 1628,
 ];
 
-pub fn fqmul(a: i16, b: i16) -> i16 {
+/// Field multiplication in the Kyber polynomial ring (q = 3329).
+/// Uses Montgomery multiplication to compute a * b mod q.
+pub fn field_multiply(a: i16, b: i16) -> i16 {
     montgomery_reduce(a as i32 * b as i32)
 }
 
-pub fn ntt(r: &mut [i16]) {
+/// Forward Number Theoretic Transform (NTT) on a polynomial.
+/// Transforms coefficients from standard to NTT domain using iterative Cooley-Tukey algorithm.
+/// Input is in-place on the coefficient array.
+pub fn ntt_forward(coeffs: &mut [i16]) {
     let mut j;
-    let mut k = 1usize;
-    let mut len = 128;
-    let (mut t, mut zeta);
+    let mut zeta_index = 1usize;
+    let mut layer_length = 128;
+    let (mut temp, mut zeta);
 
-    while len >= 2 {
+    while layer_length >= 2 {
         let mut start = 0;
         while start < 256 {
-            zeta = ZETAS[k];
-            k += 1;
+            zeta = ZETAS[zeta_index];
+            zeta_index += 1;
             j = start;
-            while j < (start + len) {
-                t = fqmul(zeta, r[j + len]);
-                r[j + len] = r[j] - t;
-                r[j] += t;
+            while j < (start + layer_length) {
+                temp = field_multiply(zeta, coeffs[j + layer_length]);
+                coeffs[j + layer_length] = coeffs[j] - temp;
+                coeffs[j] += temp;
                 j += 1;
             }
-            start = j + len;
+            start = j + layer_length;
         }
-        len >>= 1;
+        layer_length >>= 1;
     }
 }
 
-pub fn invntt(r: &mut [i16]) {
+/// Inverse Number Theuristic Transform (INTT) on a polynomial.
+/// Transforms coefficients from NTT domain back to standard representation.
+/// Uses inverse butterflies withBarrett reduction and final scaling factor.
+pub fn ntt_inverse(coeffs: &mut [i16]) {
     let mut j;
-    let mut k = 127usize;
-    let mut len = 2;
-    let (mut t, mut zeta);
+    let mut zeta_index = 127usize;
+    let mut layer_length = 2;
+    let (mut temp, mut zeta);
     const F: i16 = 1441;
-    while len <= 128 {
+    while layer_length <= 128 {
         let mut start = 0;
         while start < 256 {
-            zeta = ZETAS[k];
-            k -= 1;
+            zeta = ZETAS[zeta_index];
+            zeta_index -= 1;
             j = start;
-            while j < (start + len) {
-                t = r[j];
-                r[j] = barrett_reduce(t + r[j + len]);
-                r[j + len] = r[j + len] - t;
-                r[j + len] = fqmul(zeta, r[j + len]);
+            while j < (start + layer_length) {
+                temp = coeffs[j];
+                coeffs[j] = barrett_reduce(temp + coeffs[j + layer_length]);
+                coeffs[j + layer_length] = coeffs[j + layer_length] - temp;
+                coeffs[j + layer_length] = field_multiply(zeta, coeffs[j + layer_length]);
                 j += 1
             }
-            start = j + len;
+            start = j + layer_length;
         }
-        len <<= 1;
+        layer_length <<= 1;
     }
     for j in 0..256 {
-        r[j] = fqmul(r[j], F);
+        coeffs[j] = field_multiply(coeffs[j], F);
     }
 }
 
-pub fn basemul(r: &mut [i16], a: &[i16], b: &[i16], zeta: i16) {
-    r[0] = fqmul(a[1], b[1]);
-    r[0] = fqmul(r[0], zeta);
-    r[0] += fqmul(a[0], b[0]);
+/// Base multiplication for two polynomials in the NTT domain.
+/// Computes point-wise multiplication of polynomials a and b,
+/// using the provided twiddle factor zeta for the butterfly operation.
+pub fn base_multiply(result: &mut [i16], a: &[i16], b: &[i16], zeta: i16) {
+    result[0] = field_multiply(a[1], b[1]);
+    result[0] = field_multiply(result[0], zeta);
+    result[0] += field_multiply(a[0], b[0]);
 
-    r[1] = fqmul(a[0], b[1]);
-    r[1] += fqmul(a[1], b[0]);
+    result[1] = field_multiply(a[0], b[1]);
+    result[1] += field_multiply(a[1], b[0]);
 }

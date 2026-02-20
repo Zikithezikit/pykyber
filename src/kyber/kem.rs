@@ -1,7 +1,7 @@
 use super::error::KyberError;
 use super::indcpa::{indcpa_dec, indcpa_enc, indcpa_keypair};
 use super::params::*;
-use super::symmetric::{hash_g, hash_h, kdf};
+use super::symmetric::{hash_sha3_256, hash_sha3_512, shake256_kdf};
 use super::verify::{cmov, verify};
 use rand_core::{CryptoRng, RngCore};
 
@@ -21,7 +21,7 @@ where
     indcpa_keypair(pk, sk, _seed, _rng)?;
 
     sk[KYBER_INDCPA_SECRETKEYBYTES..END].copy_from_slice(&pk[..KYBER_INDCPA_PUBLICKEYBYTES]);
-    hash_h(&mut sk[PK_START..], pk, KYBER_PUBLICKEYBYTES);
+    hash_sha3_256(&mut sk[PK_START..], pk, KYBER_PUBLICKEYBYTES);
 
     if let Some(s) = _seed {
         sk[SK_START..].copy_from_slice(&s.1)
@@ -51,14 +51,14 @@ where
         _rng.fill_bytes(&mut randbuf);
     }
 
-    hash_h(&mut buf, &randbuf, KYBER_SYMBYTES);
-    hash_h(&mut buf[KYBER_SYMBYTES..], pk, KYBER_PUBLICKEYBYTES);
-    hash_g(&mut kr, &buf, 2 * KYBER_SYMBYTES);
+    hash_sha3_256(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_256(&mut buf[KYBER_SYMBYTES..], pk, KYBER_PUBLICKEYBYTES);
+    hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
 
     indcpa_enc(ct, &buf, pk, &kr[KYBER_SYMBYTES..]);
 
-    hash_h(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
-    kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
+    shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
     Ok(())
 }
 
@@ -75,11 +75,11 @@ pub fn crypto_kem_dec(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> () {
     const START: usize = KYBER_SECRETKEYBYTES - 2 * KYBER_SYMBYTES;
     const END: usize = KYBER_SECRETKEYBYTES - KYBER_SYMBYTES;
     buf[KYBER_SYMBYTES..].copy_from_slice(&sk[START..END]);
-    hash_g(&mut kr, &buf, 2 * KYBER_SYMBYTES);
+    hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
 
     indcpa_enc(&mut cmp, &buf, &pk, &kr[KYBER_SYMBYTES..]);
     let fail = verify(ct, &cmp, KYBER_CIPHERTEXTBYTES);
-    hash_h(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
+    hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
     cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
-    kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
 }

@@ -1,9 +1,9 @@
 use super::cbd::poly_cbd_eta1;
 use super::cbd::poly_cbd_eta2;
-use super::ntt::{basemul, invntt, ntt, ZETAS};
+use super::ntt::{base_multiply, ntt_forward, ntt_inverse, ZETAS};
 use super::params::*;
 use super::reduce::{barrett_reduce, montgomery_reduce};
-use super::symmetric::prf;
+use super::symmetric::shake256_prf_expand;
 
 #[derive(Clone, Copy)]
 pub struct Poly {
@@ -78,35 +78,35 @@ pub fn poly_frombytes(r: &mut Poly, a: &[u8]) {
 pub fn poly_getnoise_eta1(r: &mut Poly, seed: &[u8], nonce: u8) {
     const LENGTH: usize = KYBER_ETA1 * KYBER_N / 4;
     let mut buf = [0u8; LENGTH];
-    prf(&mut buf, LENGTH, seed, nonce);
+    shake256_prf_expand(&mut buf, LENGTH, seed, nonce);
     poly_cbd_eta1(r, &buf);
 }
 
 pub fn poly_getnoise_eta2(r: &mut Poly, seed: &[u8], nonce: u8) {
     const LENGTH: usize = KYBER_ETA2 * KYBER_N / 4;
     let mut buf = [0u8; LENGTH];
-    prf(&mut buf, LENGTH, seed, nonce);
+    shake256_prf_expand(&mut buf, LENGTH, seed, nonce);
     poly_cbd_eta2(r, &buf);
 }
 
 pub fn poly_ntt(r: &mut Poly) {
-    ntt(&mut r.coeffs);
+    ntt_forward(&mut r.coeffs);
     poly_reduce(r);
 }
 
 pub fn poly_invntt_tomont(r: &mut Poly) {
-    invntt(&mut r.coeffs);
+    ntt_inverse(&mut r.coeffs);
 }
 
-pub fn poly_basemul(r: &mut Poly, a: &Poly, b: &Poly) {
+pub fn poly_base_multiply(r: &mut Poly, a: &Poly, b: &Poly) {
     for i in 0..(KYBER_N / 4) {
-        basemul(
+        base_multiply(
             &mut r.coeffs[4 * i..],
             &a.coeffs[4 * i..],
             &b.coeffs[4 * i..],
             ZETAS[64 + i],
         );
-        basemul(
+        base_multiply(
             &mut r.coeffs[4 * i + 2..],
             &a.coeffs[4 * i + 2..],
             &b.coeffs[4 * i + 2..],

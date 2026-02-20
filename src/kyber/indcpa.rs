@@ -2,7 +2,9 @@ use super::error::KyberError;
 use super::params::*;
 use super::poly::*;
 use super::polyvec::*;
-use super::symmetric::{hash_g, xof_absorb, xof_squeezeblocks, XofState, XOF_BLOCKBYTES};
+use super::symmetric::{
+    hash_sha3_512, xof_absorb_bytes, xof_squeeze_blocks, XofState, XOF_BLOCKBYTES,
+};
 use rand_core::{CryptoRng, RngCore};
 
 fn pack_pk(r: &mut [u8], pk: &mut Polyvec, seed: &[u8]) {
@@ -76,11 +78,11 @@ fn gen_matrix(a: &mut [Polyvec], seed: &[u8], transposed: bool) {
     for i in 0..KYBER_K {
         for j in 0..KYBER_K {
             if transposed {
-                xof_absorb(&mut state, seed, i as u8, j as u8);
+                xof_absorb_bytes(&mut state, seed, i as u8, j as u8);
             } else {
-                xof_absorb(&mut state, seed, j as u8, i as u8);
+                xof_absorb_bytes(&mut state, seed, j as u8, i as u8);
             }
-            xof_squeezeblocks(&mut buf, GEN_MATRIX_NBLOCKS, &mut state);
+            xof_squeeze_blocks(&mut buf, GEN_MATRIX_NBLOCKS, &mut state);
             buflen = GEN_MATRIX_NBLOCKS * XOF_BLOCKBYTES;
             ctr = rej_uniform(&mut a[i].vec[j].coeffs, KYBER_N, &buf, buflen);
 
@@ -89,7 +91,7 @@ fn gen_matrix(a: &mut [Polyvec], seed: &[u8], transposed: bool) {
                 for k in 0..off {
                     buf[k] = buf[buflen - off + k];
                 }
-                xof_squeezeblocks(&mut buf[off..], 1, &mut state);
+                xof_squeeze_blocks(&mut buf[off..], 1, &mut state);
                 buflen = off + XOF_BLOCKBYTES;
                 ctr += rej_uniform(&mut a[i].vec[j].coeffs[ctr..], KYBER_N - ctr, &buf, buflen);
             }
@@ -118,7 +120,7 @@ where
         _rng.fill_bytes(&mut randbuf[..KYBER_SYMBYTES]);
     }
 
-    hash_g(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_512(&mut buf, &randbuf, KYBER_SYMBYTES);
 
     let (publicseed, noiseseed) = buf.split_at(KYBER_SYMBYTES);
     gen_a(&mut a, publicseed);
