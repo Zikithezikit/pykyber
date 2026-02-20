@@ -26,22 +26,26 @@ impl KeccakState {
     }
 }
 
-fn rol(a: u64, offset: u64) -> u64 {
-    (a << offset) ^ (a >> (64 - offset))
+/// Rotate left operation for 64-bit values.
+/// Rotates `value` left by `offset` bits.
+fn rotate_left(value: u64, offset: u64) -> u64 {
+    (value << offset) | (value >> (64 - offset))
 }
 
-pub fn load64(x: &[u8]) -> u64 {
-    let mut r = 0u64;
+/// Load 8 bytes from little-endian byte array into a 64-bit unsigned integer.
+pub fn load_u64(bytes: &[u8]) -> u64 {
+    let mut result = 0u64;
     for i in 0..8 {
-        r |= (x[i] as u64) << (8 * i);
+        result |= (bytes[i] as u64) << (8 * i);
     }
-    r
+    result
 }
 
-pub fn store64(x: &mut [u8], mut u: u64) {
-    for i in x.iter_mut().take(8) {
-        *i = u as u8;
-        u >>= 8;
+/// Store a 64-bit unsigned integer into little-endian byte array.
+pub fn store_u64(bytes: &mut [u8], mut value: u64) {
+    for byte in bytes.iter_mut().take(8) {
+        *byte = value as u8;
+        value >>= 8;
     }
 }
 
@@ -106,22 +110,22 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         let mut bco = abo ^ ago ^ ako ^ amo ^ aso;
         let mut bcu = abu ^ agu ^ aku ^ amu ^ asu;
 
-        let mut da = bcu ^ rol(bce, 1);
-        let mut de = bca ^ rol(bci, 1);
-        let mut di = bce ^ rol(bco, 1);
-        let mut d_o = bci ^ rol(bcu, 1);
-        let mut du = bco ^ rol(bca, 1);
+        let mut da = bcu ^ rotate_left(bce, 1);
+        let mut de = bca ^ rotate_left(bci, 1);
+        let mut di = bce ^ rotate_left(bco, 1);
+        let mut d_o = bci ^ rotate_left(bcu, 1);
+        let mut du = bco ^ rotate_left(bca, 1);
 
         aba ^= da;
         bca = aba;
         age ^= de;
-        bce = rol(age, 44);
+        bce = rotate_left(age, 44);
         aki ^= di;
-        bci = rol(aki, 43);
+        bci = rotate_left(aki, 43);
         amo ^= d_o;
-        bco = rol(amo, 21);
+        bco = rotate_left(amo, 21);
         asu ^= du;
-        bcu = rol(asu, 14);
+        bcu = rotate_left(asu, 14);
         let mut eba = bca ^ ((!bce) & bci);
         eba ^= KECCAKF_ROUNDCONSTANTS[round];
         let mut ebe = bce ^ ((!bci) & bco);
@@ -130,15 +134,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         let mut ebu = bcu ^ ((!bca) & bce);
 
         abo ^= d_o;
-        bca = rol(abo, 28);
+        bca = rotate_left(abo, 28);
         agu ^= du;
-        bce = rol(agu, 20);
+        bce = rotate_left(agu, 20);
         aka ^= da;
-        bci = rol(aka, 3);
+        bci = rotate_left(aka, 3);
         ame ^= de;
-        bco = rol(ame, 45);
+        bco = rotate_left(ame, 45);
         asi ^= di;
-        bcu = rol(asi, 61);
+        bcu = rotate_left(asi, 61);
         let mut ega = bca ^ ((!bce) & bci);
         let mut ege = bce ^ ((!bci) & bco);
         let mut egi = bci ^ ((!bco) & bcu);
@@ -146,15 +150,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         let mut egu = bcu ^ ((!bca) & bce);
 
         abe ^= de;
-        bca = rol(abe, 1);
+        bca = rotate_left(abe, 1);
         agi ^= di;
-        bce = rol(agi, 6);
+        bce = rotate_left(agi, 6);
         ako ^= d_o;
-        bci = rol(ako, 25);
+        bci = rotate_left(ako, 25);
         amu ^= du;
-        bco = rol(amu, 8);
+        bco = rotate_left(amu, 8);
         asa ^= da;
-        bcu = rol(asa, 18);
+        bcu = rotate_left(asa, 18);
         let mut eka = bca ^ ((!bce) & bci);
         let mut eke = bce ^ ((!bci) & bco);
         let mut eki = bci ^ ((!bco) & bcu);
@@ -162,15 +166,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         let mut eku = bcu ^ ((!bca) & bce);
 
         abu ^= du;
-        bca = rol(abu, 27);
+        bca = rotate_left(abu, 27);
         aga ^= da;
-        bce = rol(aga, 36);
+        bce = rotate_left(aga, 36);
         ake ^= de;
-        bci = rol(ake, 10);
+        bci = rotate_left(ake, 10);
         ami ^= di;
-        bco = rol(ami, 15);
+        bco = rotate_left(ami, 15);
         aso ^= d_o;
-        bcu = rol(aso, 56);
+        bcu = rotate_left(aso, 56);
         let mut ema = bca ^ ((!bce) & bci);
         let mut eme = bce ^ ((!bci) & bco);
         let mut emi = bci ^ ((!bco) & bcu);
@@ -178,15 +182,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         let mut emu = bcu ^ ((!bca) & bce);
 
         abi ^= di;
-        bca = rol(abi, 62);
+        bca = rotate_left(abi, 62);
         ago ^= d_o;
-        bce = rol(ago, 55);
+        bce = rotate_left(ago, 55);
         aku ^= du;
-        bci = rol(aku, 39);
+        bci = rotate_left(aku, 39);
         ama ^= da;
-        bco = rol(ama, 41);
+        bco = rotate_left(ama, 41);
         ase ^= de;
-        bcu = rol(ase, 2);
+        bcu = rotate_left(ase, 2);
         let mut esa = bca ^ ((!bce) & bci);
         let mut ese = bce ^ ((!bci) & bco);
         let mut esi = bci ^ ((!bco) & bcu);
@@ -199,22 +203,22 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         bco = ebo ^ ego ^ eko ^ emo ^ eso;
         bcu = ebu ^ egu ^ eku ^ emu ^ esu;
 
-        da = bcu ^ rol(bce, 1);
-        de = bca ^ rol(bci, 1);
-        di = bce ^ rol(bco, 1);
-        d_o = bci ^ rol(bcu, 1);
-        du = bco ^ rol(bca, 1);
+        da = bcu ^ rotate_left(bce, 1);
+        de = bca ^ rotate_left(bci, 1);
+        di = bce ^ rotate_left(bco, 1);
+        d_o = bci ^ rotate_left(bcu, 1);
+        du = bco ^ rotate_left(bca, 1);
 
         eba ^= da;
         bca = eba;
         ege ^= de;
-        bce = rol(ege, 44);
+        bce = rotate_left(ege, 44);
         eki ^= di;
-        bci = rol(eki, 43);
+        bci = rotate_left(eki, 43);
         emo ^= d_o;
-        bco = rol(emo, 21);
+        bco = rotate_left(emo, 21);
         esu ^= du;
-        bcu = rol(esu, 14);
+        bcu = rotate_left(esu, 14);
         aba = bca ^ ((!bce) & bci);
         aba ^= KECCAKF_ROUNDCONSTANTS[round + 1];
         abe = bce ^ ((!bci) & bco);
@@ -223,15 +227,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         abu = bcu ^ ((!bca) & bce);
 
         ebo ^= d_o;
-        bca = rol(ebo, 28);
+        bca = rotate_left(ebo, 28);
         egu ^= du;
-        bce = rol(egu, 20);
+        bce = rotate_left(egu, 20);
         eka ^= da;
-        bci = rol(eka, 3);
+        bci = rotate_left(eka, 3);
         eme ^= de;
-        bco = rol(eme, 45);
+        bco = rotate_left(eme, 45);
         esi ^= di;
-        bcu = rol(esi, 61);
+        bcu = rotate_left(esi, 61);
         aga = bca ^ ((!bce) & bci);
         age = bce ^ ((!bci) & bco);
         agi = bci ^ ((!bco) & bcu);
@@ -239,15 +243,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         agu = bcu ^ ((!bca) & bce);
 
         ebe ^= de;
-        bca = rol(ebe, 1);
+        bca = rotate_left(ebe, 1);
         egi ^= di;
-        bce = rol(egi, 6);
+        bce = rotate_left(egi, 6);
         eko ^= d_o;
-        bci = rol(eko, 25);
+        bci = rotate_left(eko, 25);
         emu ^= du;
-        bco = rol(emu, 8);
+        bco = rotate_left(emu, 8);
         esa ^= da;
-        bcu = rol(esa, 18);
+        bcu = rotate_left(esa, 18);
         aka = bca ^ ((!bce) & bci);
         ake = bce ^ ((!bci) & bco);
         aki = bci ^ ((!bco) & bcu);
@@ -255,15 +259,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         aku = bcu ^ ((!bca) & bce);
 
         ebu ^= du;
-        bca = rol(ebu, 27);
+        bca = rotate_left(ebu, 27);
         ega ^= da;
-        bce = rol(ega, 36);
+        bce = rotate_left(ega, 36);
         eke ^= de;
-        bci = rol(eke, 10);
+        bci = rotate_left(eke, 10);
         emi ^= di;
-        bco = rol(emi, 15);
+        bco = rotate_left(emi, 15);
         eso ^= d_o;
-        bcu = rol(eso, 56);
+        bcu = rotate_left(eso, 56);
         ama = bca ^ ((!bce) & bci);
         ame = bce ^ ((!bci) & bco);
         ami = bci ^ ((!bco) & bcu);
@@ -271,15 +275,15 @@ pub fn keccakf1600_statepermute(state: &mut [u64]) {
         amu = bcu ^ ((!bca) & bce);
 
         ebi ^= di;
-        bca = rol(ebi, 62);
+        bca = rotate_left(ebi, 62);
         ego ^= d_o;
-        bce = rol(ego, 55);
+        bce = rotate_left(ego, 55);
         eku ^= du;
-        bci = rol(eku, 39);
+        bci = rotate_left(eku, 39);
         ema ^= da;
-        bco = rol(ema, 41);
+        bco = rotate_left(ema, 41);
         ese ^= de;
-        bcu = rol(ese, 2);
+        bcu = rotate_left(ese, 2);
         asa = bca ^ ((!bce) & bci);
         ase = bce ^ ((!bci) & bco);
         asi = bci ^ ((!bco) & bcu);
@@ -319,7 +323,7 @@ fn keccak_squeezeblocks(h: &mut [u8], mut nblocks: usize, s: &mut [u64], r: usiz
     while nblocks > 0 {
         keccakf1600_statepermute(s);
         for i in 0..r / 8 {
-            store64(&mut h[idx + 8 * i..], s[i])
+            store_u64(&mut h[idx + 8 * i..], s[i])
         }
         idx += r;
         nblocks -= 1;
@@ -346,7 +350,7 @@ pub fn sha3_256(h: &mut [u8], input: &[u8], inlen: usize) {
     keccak_absorb_once(&mut s, SHA3_256_RATE, input, inlen, 0x06);
     keccakf1600_statepermute(&mut s);
     for i in 0..4 {
-        store64(&mut h[8 * i..], s[i]);
+        store_u64(&mut h[8 * i..], s[i]);
     }
 }
 
@@ -355,7 +359,7 @@ pub fn sha3_512(h: &mut [u8], input: &[u8], inlen: usize) {
     keccak_absorb_once(&mut s, SHA3_512_RATE, input, inlen, 0x06);
     keccakf1600_statepermute(&mut s);
     for i in 0..8 {
-        store64(&mut h[8 * i..], s[i]);
+        store_u64(&mut h[8 * i..], s[i]);
     }
 }
 
@@ -370,7 +374,7 @@ pub fn keccak_absorb_once(s: &mut [u64], r: usize, input: &[u8], mut inlen: usiz
     let mut idx = 0usize;
     while inlen >= r {
         for i in 0..(r / 8) {
-            s[i] ^= load64(&input[idx + 8 * i..]);
+            s[i] ^= load_u64(&input[idx + 8 * i..]);
         }
         idx += r;
         inlen -= r;
@@ -400,7 +404,7 @@ fn keccak_squeeze(
         let mut i = pos;
         let mut w = i / 8;
         while i < r && i < pos + outlen {
-            store64(&mut out[idx..], s[w]);
+            store_u64(&mut out[idx..], s[w]);
             i += 8;
             w += 1;
             idx += 8;
