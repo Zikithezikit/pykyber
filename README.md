@@ -8,125 +8,59 @@ A Python library for Kyber post-quantum key encapsulation, implemented in Rust.
 pip install pykyber
 ```
 
-Or for development:
-
-```bash
-pip install maturin
-maturin develop
-```
-
 ## Quick Start
 
 ```python
 import pykyber
 
-# Generate a keypair
-keypair = pykyber.Kyber768KeyPair.generate()
+# Generate a keypair (Alice)
+alice_keypair = pykyber.Kyber768()
 
-# Encapsulate (create shared secret)
-ciphertext, shared_secret = keypair.encapsulate()
+# Encapsulate - create shared secret (Bob)
+bob_result = pykyber.Kyber768.encapsulate(alice_keypair.public_key)
 
-# Decapsulate (recover shared secret)
-shared_secret2 = keypair.decapsulate(ciphertext)
+# Decapsulate - recover shared secret (Alice)
+shared_secret = alice_keypair.decapsulate(bob_result.ciphertext)
 
-print(f"Shared secrets match: {shared_secret == shared_secret2}")
+# Both parties now share the same secret
+print(f"Match: {bob_result.shared_secret == shared_secret}")
 ```
 
-## API Reference
+## API Usage
 
-### Classes
+### Class-based API (Recommended)
 
-#### Kyber768KeyPair, Kyber512KeyPair, Kyber1024KeyPair
-
-Key pair classes with methods for encapsulation/decapsulation.
-
-```python
-# Generate a new keypair
-keypair = pykyber.Kyber768KeyPair.generate()
-
-# Or from existing keys
-keypair = pykyber.Kyber768KeyPair.from_bytes(public_key, secret_key)
-
-# Encapsulate - returns (ciphertext, shared_secret)
-ciphertext, shared_secret = keypair.encapsulate()
-
-# Decapsulate
-shared_secret = keypair.decapsulate(ciphertext)
-```
-
-#### Kyber, Kyber512, Kyber768, Kyber1024
-
-Module-level functions for each security level.
-
-```python
-# Generate keypair
-public_key, secret_key = pykyber.Kyber.generate_keypair()
-
-# Or for specific variant
-public_key, secret_key = pykyber.Kyber512.generate_keypair()
-public_key, secret_key = pykyber.Kyber768.generate_keypair()
-public_key, secret_key = pykyber.Kyber1024.generate_keypair()
-
-# Encapsulate
-ciphertext, shared_secret = pykyber.Kyber.encapsulate(public_key)
-
-# Decapsulate
-shared_secret = pykyber.Kyber.decapsulate(ciphertext, secret_key)
-```
-
-### Functions
-
-The raw functions are also available directly:
+The simplest way to use Kyber:
 
 ```python
 import pykyber
 
-# Generate keypair (Kyber768 by default)
-public_key, secret_key = pykyber.generate_keypair()
+# Create a keypair - instant generation on class instantiation
+keypair = pykyber.Kyber512()   # ~AES-128 security
+keypair = pykyber.Kyber768()   # ~AES-192 security
+keypair = pykyber.Kyber1024() # ~AES-256 security
 
-# Or specific variants
-public_key, secret_key = pykyber.keypair_512()
-public_key, secret_key = pykyber.keypair_768()
-public_key, secret_key = pykyber.keypair_1024()
+# Access raw key bytes
+public_key = keypair.public_key    # bytes
+secret_key = keypair.secret_key    # bytes
 
-# Encapsulate
-ciphertext, shared_secret = pykyber.encapsulate(public_key)
+# Encapsulate - create ciphertext and shared secret
+result = keypair.encapsulate()
+# result.ciphertext     - bytes to send to receiver
+# result.shared_secret  - 32 bytes shared secret
 
-# Decapsulate
-shared_secret = pykyber.decapsulate(ciphertext, secret_key)
+# Decapsulate - recover shared secret from ciphertext
+shared_secret = keypair.decapsulate(result.ciphertext)
 ```
 
-### Key Sizes
+## Key Sizes
 
-| Variant  | Public Key | Secret Key | Ciphertext | Shared Secret |
-|----------|------------|------------|------------|---------------|
+| Variant   | Public Key | Secret Key | Ciphertext | Shared Secret |
+|-----------|------------|------------|------------|---------------|
 | Kyber-512 | 800 bytes  | 1632 bytes | 768 bytes  | 32 bytes      |
 | Kyber-768 | 1184 bytes | 2400 bytes | 1088 bytes | 32 bytes      |
-| Kyber-1024 | 1568 bytes | 3168 bytes | 1568 bytes | 32 bytes      |
+| Kyber-1024| 1568 bytes | 3168 bytes | 1408 bytes | 32 bytes      |
 
-Note: Currently all variants use Kyber-768 implementation.
-
-## Development
-
-### Build
-
-```bash
-# Build Rust extension
-cargo build
-
-# Build Python package
-maturin develop
-```
-
-### Tests
-
-```bash
-# Rust tests
-cargo test
-
-# Python tests
-pytest python/pykyber/test_kyber.py -v
-```
 
 ## License
 
