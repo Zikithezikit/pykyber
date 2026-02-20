@@ -1,2 +1,6 @@
 .venv/
 target/
+__pycache__/
+.vscode/
+*.so
+*.pyi
