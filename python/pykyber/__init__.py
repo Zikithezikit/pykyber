@@ -1,7 +1,6 @@
 """Kyber post-quantum key encapsulation."""
 
-from .kyber import (
-    Kyber,
+from ._kyber import (
     Kyber768,
     Kyber512,
     Kyber1024,
