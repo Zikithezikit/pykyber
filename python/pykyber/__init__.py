@@ -4,8 +4,6 @@ from ._kyber import (
     Kyber768,
     Kyber512,
     Kyber1024,
-    PublicKey,
-    PrivateKey,
 )
 
 # Import underscored functions from Rust

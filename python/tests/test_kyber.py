@@ -2,6 +2,63 @@ import pytest
 import pykyber
 
 
+# Class-based API tests
+
+def test_kyber768_new_api():
+    """Test new Kyber768 API: keypair = Kyber768(); result = keypair.encapsulate()"""
+    keypair = pykyber.Kyber768()
+    
+    result = keypair.encapsulate()
+    shared_secret2 = keypair.decapsulate(result.ciphertext)
+    
+    assert len(keypair.public_key) == 1184
+    assert len(keypair.secret_key) == 2400
+    assert len(result.ciphertext) == 1088
+    assert len(result.shared_secret) == 32
+    assert result.shared_secret == shared_secret2
+
+
+def test_kyber512_new_api():
+    """Test new Kyber512 API."""
+    keypair = pykyber.Kyber512()
+    
+    result = keypair.encapsulate()
+    shared_secret2 = keypair.decapsulate(result.ciphertext)
+    
+    # Note: Rust implementation currently returns Kyber768 sizes
+    assert len(keypair.public_key) == 1184
+    assert len(keypair.secret_key) == 2400
+    assert len(result.ciphertext) == 1088
+    assert result.shared_secret == shared_secret2
+
+
+def test_kyber1024_new_api():
+    """Test new Kyber1024 API."""
+    keypair = pykyber.Kyber1024()
+    
+    result = keypair.encapsulate()
+    shared_secret2 = keypair.decapsulate(result.ciphertext)
+    
+    # Note: Rust implementation currently returns Kyber768 sizes
+    assert len(keypair.public_key) == 1184
+    assert len(keypair.secret_key) == 2400
+    assert len(result.ciphertext) == 1088
+    assert result.shared_secret == shared_secret2
+
+
+def test_keypair_repr():
+    """Test __repr__ methods."""
+    keypair = pykyber.Kyber768()
+    r = repr(keypair)
+    assert 'Keypair' in r
+    assert 'public_key' in r
+    assert 'secret_key' in r
+    
+    result = keypair.encapsulate()
+    r = repr(result)
+    assert 'EncapsulationResult' in r
+
+
 def test_keypair_generation():
     """Test that keypair generation produces valid keys."""
     pk, sk = pykyber._generate_keypair()
@@ -295,73 +352,3 @@ def test_very_long_input_rejection():
     long_pk = pk + b"extra"
     with pytest.raises(Exception):
         pykyber._encapsulate(long_pk)
-
-
-# Class-based API tests
-
-def test_kyber768_new_api():
-    """Test new Kyber768 API: private_key = generate_keypair(); public_key = private_key.public_key"""
-    private_key = pykyber.Kyber768.generate_keypair()
-    public_key = private_key.public_key
-    
-    ciphertext, shared_secret = public_key.encapsulate()
-    shared_secret2 = private_key.decapsulate(ciphertext)
-    
-    assert len(public_key.public_key) == 1184
-    assert len(private_key.secret_key) == 2400
-    assert len(ciphertext) == 1088
-    assert len(shared_secret) == 32
-    assert shared_secret == shared_secret2
-
-
-def test_kyber512_new_api():
-    """Test new Kyber512 API."""
-    private_key = pykyber.Kyber512.generate_keypair()
-    public_key = private_key.public_key
-    
-    ciphertext, shared_secret = public_key.encapsulate()
-    shared_secret2 = private_key.decapsulate(ciphertext)
-    
-    # Note: Rust implementation currently returns Kyber768 sizes
-    assert len(public_key.public_key) == 1184
-    assert len(private_key.secret_key) == 2400
-    assert len(ciphertext) == 1088
-    assert shared_secret == shared_secret2
-
-
-def test_kyber1024_new_api():
-    """Test new Kyber1024 API."""
-    private_key = pykyber.Kyber1024.generate_keypair()
-    public_key = private_key.public_key
-    
-    ciphertext, shared_secret = public_key.encapsulate()
-    shared_secret2 = private_key.decapsulate(ciphertext)
-    
-    # Note: Rust implementation currently returns Kyber768 sizes
-    assert len(public_key.public_key) == 1184
-    assert len(private_key.secret_key) == 2400
-    assert len(ciphertext) == 1088
-    assert shared_secret == shared_secret2
-
-
-def test_kyber_class_alias():
-    """Test that Kyber is an alias for Kyber768."""
-    private_key = pykyber.Kyber.generate_keypair()
-    public_key = private_key.public_key
-    
-    ciphertext, shared_secret = public_key.encapsulate()
-    shared_secret2 = private_key.decapsulate(ciphertext)
-    
-    assert len(public_key.public_key) == 1184
-    assert shared_secret == shared_secret2
-
-
-def test_keypair_repr():
-    """Test __repr__ methods."""
-    private_key = pykyber.Kyber768.generate_keypair()
-    r = repr(private_key)
-    assert 'PrivateKey' in r
-    
-    public_key = private_key.public_key
-    r = repr(public_key)
-    assert 'PublicKey' in r
