@@ -3,6 +3,63 @@ use super::params::*;
 use super::poly::*;
 
 #[derive(Clone, Copy)]
+pub struct Polyvec512 {
+    pub vec: [Poly; KYBER_512_K],
+}
+
+impl Polyvec512 {
+    pub fn new() -> Self {
+        Polyvec512 {
+            vec: [Poly::new(); KYBER_512_K],
+        }
+    }
+}
+
+impl Default for Polyvec512 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct Polyvec768 {
+    pub vec: [Poly; KYBER_768_K],
+}
+
+impl Polyvec768 {
+    pub fn new() -> Self {
+        Polyvec768 {
+            vec: [Poly::new(); KYBER_768_K],
+        }
+    }
+}
+
+impl Default for Polyvec768 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct Polyvec1024 {
+    pub vec: [Poly; KYBER_1024_K],
+}
+
+impl Polyvec1024 {
+    pub fn new() -> Self {
+        Polyvec1024 {
+            vec: [Poly::new(); KYBER_1024_K],
+        }
+    }
+}
+
+impl Default for Polyvec1024 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct Polyvec {
     pub vec: [Poly; KYBER_K],
 }
@@ -12,6 +69,202 @@ impl Polyvec {
         Polyvec {
             vec: [Poly::new(); KYBER_K],
         }
+    }
+}
+
+impl Default for Polyvec {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub fn polyvec_compress_512(r: &mut [u8], a: Polyvec512) {
+    let mut t = [0u16; 4];
+    let mut idx = 0usize;
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        for j in 0..KYBER_N / 4 {
+            for k in 0..4 {
+                t[k] = a.vec[i].coeffs[4 * j + k] as u16;
+                t[k] = t[k].wrapping_add((((t[k] as i16) >> 15) & KYBER_Q as i16) as u16);
+                t[k] = (((((t[k] as u32) << 10) + KYBER_Q as u32 / 2) / KYBER_Q as u32) & 0x3ff)
+                    as u16;
+            }
+            r[idx + 0] = (t[0] >> 0) as u8;
+            r[idx + 1] = ((t[0] >> 8) | (t[1] << 2)) as u8;
+            r[idx + 2] = ((t[1] >> 6) | (t[2] << 4)) as u8;
+            r[idx + 3] = ((t[2] >> 4) | (t[3] << 6)) as u8;
+            r[idx + 4] = (t[3] >> 2) as u8;
+            idx += 5;
+        }
+    }
+}
+
+pub fn polyvec_decompress_512(r: &mut Polyvec512, a: &[u8]) {
+    let mut idx = 0usize;
+    let mut t = [0u16; 4];
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        for j in 0..KYBER_N / 4 {
+            t[0] = (a[idx + 0] >> 0) as u16 | (a[idx + 1] as u16) << 8;
+            t[1] = (a[idx + 1] >> 2) as u16 | (a[idx + 2] as u16) << 6;
+            t[2] = (a[idx + 2] >> 4) as u16 | (a[idx + 3] as u16) << 4;
+            t[3] = (a[idx + 3] >> 6) as u16 | (a[idx + 4] as u16) << 2;
+            idx += 5;
+
+            for k in 0..4 {
+                r.vec[i].coeffs[4 * j + k] =
+                    ((((t[k] as u32) & 0x3FF) * KYBER_Q as u32 + 512) >> 10) as i16;
+            }
+        }
+    }
+}
+
+pub fn polyvec_tobytes_512(r: &mut [u8], a: &Polyvec512) {
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        poly_tobytes(&mut r[i * KYBER_POLYBYTES..], a.vec[i]);
+    }
+}
+
+pub fn polyvec_frombytes_512(r: &mut Polyvec512, a: &[u8]) {
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        poly_frombytes(&mut r.vec[i], &a[i * KYBER_POLYBYTES..]);
+    }
+}
+
+pub fn polyvec_ntt_512(r: &mut Polyvec512) {
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        poly_ntt(&mut r.vec[i]);
+    }
+}
+
+pub fn polyvec_invntt_tomont_512(r: &mut Polyvec512) {
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        poly_invntt_tomont(&mut r.vec[i]);
+    }
+}
+
+pub fn polyvec_basemul_acc_montgomery_512(r: &mut Poly, a: &Polyvec512, b: &Polyvec512) {
+    const K: usize = KYBER_512_K;
+    let mut t = Poly::new();
+    poly_base_multiply(r, &a.vec[0], &b.vec[0]);
+    for i in 1..K {
+        poly_base_multiply(&mut t, &a.vec[i], &b.vec[i]);
+        poly_add(r, &t);
+    }
+    poly_reduce(r);
+}
+
+pub fn polyvec_reduce_512(r: &mut Polyvec512) {
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        poly_reduce(&mut r.vec[i]);
+    }
+}
+
+pub fn polyvec_add_512(r: &mut Polyvec512, b: &Polyvec512) {
+    const K: usize = KYBER_512_K;
+    for i in 0..K {
+        poly_add(&mut r.vec[i], &b.vec[i]);
+    }
+}
+
+pub fn polyvec_compress_1024(r: &mut [u8], a: Polyvec1024) {
+    let mut t = [0u16; 4];
+    let mut idx = 0usize;
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        for j in 0..KYBER_N / 4 {
+            for k in 0..4 {
+                t[k] = a.vec[i].coeffs[4 * j + k] as u16;
+                t[k] = t[k].wrapping_add((((t[k] as i16) >> 15) & KYBER_Q as i16) as u16);
+                t[k] = (((((t[k] as u32) << 10) + KYBER_Q as u32 / 2) / KYBER_Q as u32) & 0x3ff)
+                    as u16;
+            }
+            r[idx + 0] = (t[0] >> 0) as u8;
+            r[idx + 1] = ((t[0] >> 8) | (t[1] << 2)) as u8;
+            r[idx + 2] = ((t[1] >> 6) | (t[2] << 4)) as u8;
+            r[idx + 3] = ((t[2] >> 4) | (t[3] << 6)) as u8;
+            r[idx + 4] = (t[3] >> 2) as u8;
+            idx += 5;
+        }
+    }
+}
+
+pub fn polyvec_decompress_1024(r: &mut Polyvec1024, a: &[u8]) {
+    let mut idx = 0usize;
+    let mut t = [0u16; 4];
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        for j in 0..KYBER_N / 4 {
+            t[0] = (a[idx + 0] >> 0) as u16 | (a[idx + 1] as u16) << 8;
+            t[1] = (a[idx + 1] >> 2) as u16 | (a[idx + 2] as u16) << 6;
+            t[2] = (a[idx + 2] >> 4) as u16 | (a[idx + 3] as u16) << 4;
+            t[3] = (a[idx + 3] >> 6) as u16 | (a[idx + 4] as u16) << 2;
+            idx += 5;
+
+            for k in 0..4 {
+                r.vec[i].coeffs[4 * j + k] =
+                    ((((t[k] as u32) & 0x3FF) * KYBER_Q as u32 + 512) >> 10) as i16;
+            }
+        }
+    }
+}
+
+pub fn polyvec_tobytes_1024(r: &mut [u8], a: &Polyvec1024) {
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        poly_tobytes(&mut r[i * KYBER_POLYBYTES..], a.vec[i]);
+    }
+}
+
+pub fn polyvec_frombytes_1024(r: &mut Polyvec1024, a: &[u8]) {
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        poly_frombytes(&mut r.vec[i], &a[i * KYBER_POLYBYTES..]);
+    }
+}
+
+pub fn polyvec_ntt_1024(r: &mut Polyvec1024) {
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        poly_ntt(&mut r.vec[i]);
+    }
+}
+
+pub fn polyvec_invntt_tomont_1024(r: &mut Polyvec1024) {
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        poly_invntt_tomont(&mut r.vec[i]);
+    }
+}
+
+pub fn polyvec_basemul_acc_montgomery_1024(r: &mut Poly, a: &Polyvec1024, b: &Polyvec1024) {
+    const K: usize = KYBER_1024_K;
+    let mut t = Poly::new();
+    poly_base_multiply(r, &a.vec[0], &b.vec[0]);
+    for i in 1..K {
+        poly_base_multiply(&mut t, &a.vec[i], &b.vec[i]);
+        poly_add(r, &t);
+    }
+    poly_reduce(r);
+}
+
+pub fn polyvec_reduce_1024(r: &mut Polyvec1024) {
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        poly_reduce(&mut r.vec[i]);
+    }
+}
+
+pub fn polyvec_add_1024(r: &mut Polyvec1024, b: &Polyvec1024) {
+    const K: usize = KYBER_1024_K;
+    for i in 0..K {
+        poly_add(&mut r.vec[i], &b.vec[i]);
     }
 }
 
