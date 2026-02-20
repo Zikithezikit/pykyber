@@ -4,13 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "_pykyber"
-crate-type = ["cdylib"]
+name = "pykyber"
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
 pyo3 = "0.27.0"
 rand = "0.8"
 rand_core = "0.6"
+
+[dev-dependencies]
+rand = "0.8"
 
 [profile.dev]
 opt-level = 0
