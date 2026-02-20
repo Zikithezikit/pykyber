@@ -286,62 +286,62 @@ mod _pykyber {
     use pyo3::prelude::*;
 
     #[pyfunction]
-    pub fn generate_keypair() -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _generate_keypair() -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::generate_keypair()
     }
 
     #[pyfunction]
-    pub fn encapsulate(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _encapsulate(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::encapsulate_key(pk)
     }
 
     #[pyfunction]
-    pub fn decapsulate(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
+    pub fn _decapsulate(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
         super::decapsulate_key(ct, sk)
     }
 
     #[pyfunction]
-    pub fn keypair_512() -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _keypair_512() -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::generate_keypair()
     }
 
     #[pyfunction]
-    pub fn keypair_768() -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _keypair_768() -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::generate_keypair()
     }
 
     #[pyfunction]
-    pub fn keypair_1024() -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _keypair_1024() -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::generate_keypair()
     }
 
     #[pyfunction]
-    pub fn encapsulate_512(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _encapsulate_512(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::encapsulate_key(pk)
     }
 
     #[pyfunction]
-    pub fn encapsulate_768(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _encapsulate_768(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::encapsulate_key(pk)
     }
 
     #[pyfunction]
-    pub fn encapsulate_1024(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    pub fn _encapsulate_1024(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
         super::encapsulate_key(pk)
     }
 
     #[pyfunction]
-    pub fn decapsulate_512(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
+    pub fn _decapsulate_512(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
         super::decapsulate_key(ct, sk)
     }
 
     #[pyfunction]
-    pub fn decapsulate_768(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
+    pub fn _decapsulate_768(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
         super::decapsulate_key(ct, sk)
     }
 
     #[pyfunction]
-    pub fn decapsulate_1024(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
+    pub fn _decapsulate_1024(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
         super::decapsulate_key(ct, sk)
     }
 }
