@@ -25,10 +25,10 @@ def test_kyber512_new_api():
     result = keypair.encapsulate()
     shared_secret2 = keypair.decapsulate(result.ciphertext)
     
-    # Note: Rust implementation currently returns Kyber768 sizes
-    assert len(keypair.public_key) == 1184
-    assert len(keypair.secret_key) == 2400
-    assert len(result.ciphertext) == 1088
+    assert len(keypair.public_key) == 800
+    assert len(keypair.secret_key) == 1632
+    assert len(result.ciphertext) == 768
+    assert len(result.shared_secret) == 32
     assert result.shared_secret == shared_secret2
 
 
@@ -39,10 +39,10 @@ def test_kyber1024_new_api():
     result = keypair.encapsulate()
     shared_secret2 = keypair.decapsulate(result.ciphertext)
     
-    # Note: Rust implementation currently returns Kyber768 sizes
-    assert len(keypair.public_key) == 1184
-    assert len(keypair.secret_key) == 2400
-    assert len(result.ciphertext) == 1088
+    assert len(keypair.public_key) == 1568
+    assert len(keypair.secret_key) == 3168
+    assert len(result.ciphertext) == 1408
+    assert len(result.shared_secret) == 32
     assert result.shared_secret == shared_secret2
 
 
@@ -126,8 +126,8 @@ def test_wrong_secret_key_fails():
 def test_keypair_512():
     """Test keypair generation for Kyber-512."""
     pk, sk = pykyber._keypair_512()
-    assert len(pk) == 1184
-    assert len(sk) == 2400
+    assert len(pk) == 800
+    assert len(sk) == 1632
 
 
 def test_keypair_768():
@@ -140,8 +140,8 @@ def test_keypair_768():
 def test_keypair_1024():
     """Test keypair generation for Kyber-1024."""
     pk, sk = pykyber._keypair_1024()
-    assert len(pk) == 1184
-    assert len(sk) == 2400
+    assert len(pk) == 1568
+    assert len(sk) == 3168
 
 
 def test_deterministic_decapsulation():
@@ -253,16 +253,16 @@ def test_keypair_768_function():
 def test_keypair_512_function():
     """Test that keypair_512 function works."""
     pk, sk = pykyber._keypair_512()
-    ct, ss = pykyber._encapsulate(pk)
-    ss2 = pykyber._decapsulate(ct, sk)
+    ct, ss = pykyber._encapsulate_512(pk)
+    ss2 = pykyber._decapsulate_512(ct, sk)
     assert ss == ss2
 
 
 def test_keypair_1024_function():
     """Test that keypair_1024 function works."""
     pk, sk = pykyber._keypair_1024()
-    ct, ss = pykyber._encapsulate(pk)
-    ss2 = pykyber._decapsulate(ct, sk)
+    ct, ss = pykyber._encapsulate_1024(pk)
+    ss2 = pykyber._decapsulate_1024(ct, sk)
     assert ss == ss2
 
 
@@ -293,7 +293,7 @@ def test_encapsulate_1024():
 def test_decapsulate_512():
     """Test decapsulate_512 function."""
     pk, sk = pykyber._keypair_512()
-    ct, ss = pykyber._encapsulate(pk)
+    ct, ss = pykyber._encapsulate_512(pk)
     ss2 = pykyber._decapsulate_512(ct, sk)
     assert ss == ss2
 
@@ -309,7 +309,7 @@ def test_decapsulate_768():
 def test_decapsulate_1024():
     """Test decapsulate_1024 function."""
     pk, sk = pykyber._keypair_1024()
-    ct, ss = pykyber._encapsulate(pk)
+    ct, ss = pykyber._encapsulate_1024(pk)
     ss2 = pykyber._decapsulate_1024(ct, sk)
     assert ss == ss2
 
@@ -339,10 +339,10 @@ def test_interoperability_different_calls():
 
 def test_zero_keypair_not_rejected():
     """Test that zero public key is not rejected (produces weak output)."""
-    zero_pk = bytes(1184)
+    zero_pk = bytes(800)
     # Kyber doesn't reject zero keys - it will produce output (but weak)
-    ct, ss = pykyber._encapsulate(zero_pk)
-    assert len(ct) == 1088
+    ct, ss = pykyber._encapsulate_512(zero_pk)
+    assert len(ct) == 768
     assert len(ss) == 32
 
 
@@ -352,3 +352,107 @@ def test_very_long_input_rejection():
     long_pk = pk + b"extra"
     with pytest.raises(Exception):
         pykyber._encapsulate(long_pk)
+
+
+# Key exchange tests (Alice and Bob)
+
+def test_key_exchange_kyber512():
+    """Test Alice and Bob can exchange keys using Kyber512."""
+    # Alice generates a keypair
+    alice_keypair = pykyber.Kyber512()
+    alice_public_key = alice_keypair.public_key
+    
+    # Bob encapsulates using Alice's public key (no keypair needed)
+    result = pykyber.Kyber512.encapsulate(alice_public_key)
+    bob_shared_secret = result.shared_secret
+    ciphertext = result.ciphertext
+    
+    # Alice decapsulates using her keypair
+    alice_shared_secret = alice_keypair.decapsulate(ciphertext)
+    
+    # Both should have the same shared secret
+    assert alice_shared_secret == bob_shared_secret
+
+
+def test_key_exchange_kyber768():
+    """Test Alice and Bob can exchange keys using Kyber768."""
+    # Alice generates a keypair
+    alice_keypair = pykyber.Kyber768()
+    alice_public_key = alice_keypair.public_key
+    
+    # Bob encapsulates using Alice's public key (no keypair needed)
+    result = pykyber.Kyber768.encapsulate(alice_public_key)
+    bob_shared_secret = result.shared_secret
+    ciphertext = result.ciphertext
+    
+    # Alice decapsulates using her keypair
+    alice_shared_secret = alice_keypair.decapsulate(ciphertext)
+    
+    # Both should have the same shared secret
+    assert alice_shared_secret == bob_shared_secret
+
+
+def test_key_exchange_kyber1024():
+    """Test Alice and Bob can exchange keys using Kyber1024."""
+    # Alice generates a keypair
+    alice_keypair = pykyber.Kyber1024()
+    alice_public_key = alice_keypair.public_key
+    
+    # Bob encapsulates using Alice's public key (no keypair needed)
+    result = pykyber.Kyber1024.encapsulate(alice_public_key)
+    bob_shared_secret = result.shared_secret
+    ciphertext = result.ciphertext
+    
+    # Alice decapsulates using her keypair
+    alice_shared_secret = alice_keypair.decapsulate(ciphertext)
+    
+    # Both should have the same shared secret
+    assert alice_shared_secret == bob_shared_secret
+
+
+def test_encapsulate_static_method_kyber512():
+    """Test Kyber512.encapsulate() static method works."""
+    # Generate a keypair to get a public key
+    keypair = pykyber.Kyber512()
+    pk = keypair.public_key
+    
+    # Use static method to encapsulate
+    result = pykyber.Kyber512.encapsulate(pk)
+    
+    assert isinstance(result, pykyber._kyber.EncapsulationResult)
+    assert len(result.ciphertext) == 768
+    assert len(result.shared_secret) == 32
+    
+    # Can decapsulate with keypair
+    ss = keypair.decapsulate(result.ciphertext)
+    assert ss == result.shared_secret
+
+
+def test_encapsulate_static_method_kyber768():
+    """Test Kyber768.encapsulate() static method works."""
+    keypair = pykyber.Kyber768()
+    pk = keypair.public_key
+    
+    result = pykyber.Kyber768.encapsulate(pk)
+    
+    assert isinstance(result, pykyber._kyber.EncapsulationResult)
+    assert len(result.ciphertext) == 1088
+    assert len(result.shared_secret) == 32
+    
+    ss = keypair.decapsulate(result.ciphertext)
+    assert ss == result.shared_secret
+
+
+def test_encapsulate_static_method_kyber1024():
+    """Test Kyber1024.encapsulate() static method works."""
+    keypair = pykyber.Kyber1024()
+    pk = keypair.public_key
+    
+    result = pykyber.Kyber1024.encapsulate(pk)
+    
+    assert isinstance(result, pykyber._kyber.EncapsulationResult)
+    assert len(result.ciphertext) == 1408
+    assert len(result.shared_secret) == 32
+    
+    ss = keypair.decapsulate(result.ciphertext)
+    assert ss == result.shared_secret

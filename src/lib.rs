@@ -1,6 +1,11 @@
 pub mod kyber;
 
-use kyber::{decapsulate, encapsulate, keypair};
+use kyber::{
+    crypto_kem_dec_1024, crypto_kem_dec_512, crypto_kem_enc_1024, crypto_kem_enc_512,
+    crypto_kem_keypair_1024, crypto_kem_keypair_512, decapsulate, encapsulate, keypair,
+    KYBER_1024_CIPHERTEXTBYTES, KYBER_1024_PUBLICKEYBYTES, KYBER_1024_SECRETKEYBYTES,
+    KYBER_512_CIPHERTEXTBYTES, KYBER_512_PUBLICKEYBYTES, KYBER_512_SECRETKEYBYTES,
+};
 use pyo3::prelude::*;
 use rand::thread_rng;
 
@@ -45,6 +50,80 @@ fn decapsulate_key(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
             e.to_string(),
         )),
     }
+}
+
+/// Generate a Kyber-512 keypair.
+/// Returns (public_key, secret_key).
+#[pyfunction]
+fn generate_keypair_512() -> PyResult<(Vec<u8>, Vec<u8>)> {
+    let mut rng = thread_rng();
+    let mut pk = vec![0u8; KYBER_512_PUBLICKEYBYTES];
+    let mut sk = vec![0u8; KYBER_512_SECRETKEYBYTES];
+    match crypto_kem_keypair_512(&mut pk, &mut sk, &mut rng, None) {
+        Ok(()) => Ok((pk, sk)),
+        Err(e) => Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            e.to_string(),
+        )),
+    }
+}
+
+/// Generate a Kyber-1024 keypair.
+/// Returns (public_key, secret_key).
+#[pyfunction]
+fn generate_keypair_1024() -> PyResult<(Vec<u8>, Vec<u8>)> {
+    let mut rng = thread_rng();
+    let mut pk = vec![0u8; KYBER_1024_PUBLICKEYBYTES];
+    let mut sk = vec![0u8; KYBER_1024_SECRETKEYBYTES];
+    match crypto_kem_keypair_1024(&mut pk, &mut sk, &mut rng, None) {
+        Ok(()) => Ok((pk, sk)),
+        Err(e) => Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            e.to_string(),
+        )),
+    }
+}
+
+/// Encapsulate a shared secret using a Kyber-512 public key.
+#[pyfunction]
+fn encapsulate_key_512(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    let mut rng = thread_rng();
+    let mut ct = vec![0u8; KYBER_512_CIPHERTEXTBYTES];
+    let mut ss = vec![0u8; 32];
+    match crypto_kem_enc_512(&mut ct, &mut ss, pk, &mut rng, None) {
+        Ok(()) => Ok((ct, ss)),
+        Err(e) => Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            e.to_string(),
+        )),
+    }
+}
+
+/// Encapsulate a shared secret using a Kyber-1024 public key.
+#[pyfunction]
+fn encapsulate_key_1024(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    let mut rng = thread_rng();
+    let mut ct = vec![0u8; KYBER_1024_CIPHERTEXTBYTES];
+    let mut ss = vec![0u8; 32];
+    match crypto_kem_enc_1024(&mut ct, &mut ss, pk, &mut rng, None) {
+        Ok(()) => Ok((ct, ss)),
+        Err(e) => Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            e.to_string(),
+        )),
+    }
+}
+
+/// Decapsulate a shared secret using a Kyber-512 ciphertext and secret key.
+#[pyfunction]
+fn decapsulate_key_512(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
+    let mut ss = vec![0u8; 32];
+    crypto_kem_dec_512(&mut ss, ct, sk);
+    Ok(ss)
+}
+
+/// Decapsulate a shared secret using a Kyber-1024 ciphertext and secret key.
+#[pyfunction]
+fn decapsulate_key_1024(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
+    let mut ss = vec![0u8; 32];
+    crypto_kem_dec_1024(&mut ss, ct, sk);
+    Ok(ss)
 }
 
 #[cfg(test)]
@@ -302,7 +381,7 @@ mod _pykyber {
 
     #[pyfunction]
     pub fn _keypair_512() -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::generate_keypair()
+        super::generate_keypair_512()
     }
 
     #[pyfunction]
@@ -312,12 +391,12 @@ mod _pykyber {
 
     #[pyfunction]
     pub fn _keypair_1024() -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::generate_keypair()
+        super::generate_keypair_1024()
     }
 
     #[pyfunction]
     pub fn _encapsulate_512(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::encapsulate_key(pk)
+        super::encapsulate_key_512(pk)
     }
 
     #[pyfunction]
@@ -327,12 +406,12 @@ mod _pykyber {
 
     #[pyfunction]
     pub fn _encapsulate_1024(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::encapsulate_key(pk)
+        super::encapsulate_key_1024(pk)
     }
 
     #[pyfunction]
     pub fn _decapsulate_512(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
-        super::decapsulate_key(ct, sk)
+        super::decapsulate_key_512(ct, sk)
     }
 
     #[pyfunction]
@@ -342,6 +421,6 @@ mod _pykyber {
 
     #[pyfunction]
     pub fn _decapsulate_1024(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
-        super::decapsulate_key(ct, sk)
+        super::decapsulate_key_1024(ct, sk)
     }
 }
