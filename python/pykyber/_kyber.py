@@ -162,5 +162,3 @@ class Kyber1024(Kyber):
     def _decapsulate_fn(cls) -> Callable[[bytes, bytes], bytes]:
         return pykyber._decapsulate_1024
 
-
-Kyber = Kyber768
