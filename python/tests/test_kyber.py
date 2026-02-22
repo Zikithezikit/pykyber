@@ -470,7 +470,7 @@ def test_invalid_public_key_length_raises_error():
     """Test that invalid public key length raises KyberError."""
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate(b"short")
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
 
 
 def test_invalid_ciphertext_length_raises_error():
@@ -478,7 +478,7 @@ def test_invalid_ciphertext_length_raises_error():
     sk = bytes(2400)
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate(b"short", sk)
-    assert "Invalid input for 'ct'" in str(exc_info.value)
+    assert "Invalid ciphertext" in str(exc_info.value)
 
 
 def test_invalid_secret_key_length_raises_error():
@@ -493,7 +493,7 @@ def test_empty_public_key_raises_error():
     """Test that empty public key raises KyberError."""
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate(b"")
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
 
 
 def test_empty_ciphertext_raises_error():
@@ -501,7 +501,7 @@ def test_empty_ciphertext_raises_error():
     pk, sk = pykyber._generate_keypair()
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate(b"", sk)
-    assert "Invalid input for 'ct'" in str(exc_info.value)
+    assert "Invalid ciphertext" in str(exc_info.value)
 
 
 def test_empty_secret_key_raises_error():
@@ -519,14 +519,14 @@ def test_very_long_input_raises_error():
     long_pk = pk + b"extra"
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate(long_pk)
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
 
 
 def test_kyber512_invalid_public_key_length():
     """Test Kyber512 with invalid public key length."""
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate_512(b"short")
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
 
 
 def test_kyber512_invalid_ciphertext_length():
@@ -534,7 +534,7 @@ def test_kyber512_invalid_ciphertext_length():
     sk = bytes(1632)
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate_512(b"short", sk)
-    assert "Invalid input for 'ct'" in str(exc_info.value)
+    assert "Invalid ciphertext" in str(exc_info.value)
 
 
 def test_kyber512_invalid_secret_key_length():
@@ -549,7 +549,7 @@ def test_kyber1024_invalid_public_key_length():
     """Test Kyber1024 with invalid public key length."""
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate_1024(b"short")
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
 
 
 def test_kyber1024_invalid_ciphertext_length():
@@ -557,7 +557,7 @@ def test_kyber1024_invalid_ciphertext_length():
     sk = bytes(3168)
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate_1024(b"short", sk)
-    assert "Invalid input for 'ct'" in str(exc_info.value)
+    assert "Invalid ciphertext" in str(exc_info.value)
 
 
 def test_kyber1024_invalid_secret_key_length():
@@ -574,7 +574,7 @@ def test_boundary_public_key_length_512():
     short_pk = pk[:-1]
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate_512(short_pk)
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
     assert "800" in str(exc_info.value)
     assert "799" in str(exc_info.value)
 
@@ -585,7 +585,7 @@ def test_boundary_public_key_length_768():
     short_pk = pk[:-1]
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate(short_pk)
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
     assert "1184" in str(exc_info.value)
     assert "1183" in str(exc_info.value)
 
@@ -596,7 +596,7 @@ def test_boundary_public_key_length_1024():
     short_pk = pk[:-1]
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate_1024(short_pk)
-    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "Invalid public key" in str(exc_info.value)
     assert "1568" in str(exc_info.value)
     assert "1567" in str(exc_info.value)
 
@@ -638,7 +638,7 @@ def test_boundary_ciphertext_length_512():
     short_ct = ct[:-1]
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate_512(short_ct, sk)
-    assert "Invalid input for 'ct'" in str(exc_info.value)
+    assert "Invalid ciphertext" in str(exc_info.value)
 
 
 def test_boundary_ciphertext_length_768():
@@ -648,7 +648,7 @@ def test_boundary_ciphertext_length_768():
     short_ct = ct[:-1]
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate(short_ct, sk)
-    assert "Invalid input for 'ct'" in str(exc_info.value)
+    assert "Invalid ciphertext" in str(exc_info.value)
 
 
 def test_boundary_ciphertext_length_1024():
@@ -658,7 +658,7 @@ def test_boundary_ciphertext_length_1024():
     short_ct = ct[:-1]
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate_1024(short_ct, sk)
-    assert "Invalid input for 'ct'" in str(exc_info.value)
+    assert "Invalid ciphertext" in str(exc_info.value)
 
 
 def test_error_can_be_caught_as_exception():
@@ -677,7 +677,7 @@ def test_error_message_contains_useful_info():
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._encapsulate(b"x" * 100)
     msg = str(exc_info.value)
-    assert "pk" in msg
+    assert "public key" in msg
     assert "expected" in msg or "bytes" in msg
     
     ct, _ = pykyber._encapsulate(pk)
@@ -836,7 +836,7 @@ def test_user_can_handle_error_gracefully():
     
     result = safe_encapsulate(b"short")
     assert "Error:" in result
-    assert "Invalid input" in result
+    assert "Invalid" in result
     
     pk, _ = pykyber._generate_keypair()
     result = safe_encapsulate(pk)

@@ -8,23 +8,44 @@ class KyberError(Exception):
     """Kyber error exception - raised when invalid input is provided."""
     pass
 
-def _wrap_encapsulate(fn: Callable[[bytes], Tuple[bytes, bytes]]) -> Callable[[bytes], Tuple[bytes, bytes]]:
-    """Wrap a Rust encapsulate function to raise KyberError on failure."""
+def _validate_pk(pk: bytes, expected_size: int, method_name: str) -> None:
+    """Validate public key length with a clear error message."""
+    actual_size = len(pk)
+    if actual_size != expected_size:
+        raise KyberError(
+            f"Invalid public key for {method_name}: expected {expected_size} bytes, got {actual_size}. "
+            f"Ensure you're using the correct Kyber variant (Kyber512={800}, Kyber768={1184}, Kyber1024={1568})."
+        )
+
+
+def _validate_encapsulate(fn: Callable[[bytes], Tuple[bytes, bytes]], expected_pk_size: int, method_name: str) -> Callable[[bytes], Tuple[bytes, bytes]]:
+    """Validate public key and call Rust encapsulate function."""
     def wrapper(pk: bytes) -> Tuple[bytes, bytes]:
+        _validate_pk(pk, expected_pk_size, method_name)
         try:
             return fn(pk)
         except Exception as e:
-            raise KyberError(str(e)) from e
+            raise KyberError(str(e)) from None
     return wrapper
 
 
-def _wrap_decapsulate(fn: Callable[[bytes, bytes], bytes]) -> Callable[[bytes, bytes], bytes]:
-    """Wrap a Rust decapsulate function to raise KyberError on failure."""
+def _validate_ct(ct: bytes, expected_size: int, method_name: str) -> None:
+    """Validate ciphertext length with a clear error message."""
+    actual_size = len(ct)
+    if actual_size != expected_size:
+        raise KyberError(
+            f"Invalid ciphertext for {method_name}: expected {expected_size} bytes, got {actual_size}."
+        )
+
+
+def _validate_decapsulate(fn: Callable[[bytes, bytes], bytes], expected_ct_size: int, method_name: str) -> Callable[[bytes, bytes], bytes]:
+    """Validate ciphertext and call Rust decapsulate function."""
     def wrapper(ct: bytes, sk: bytes) -> bytes:
+        _validate_ct(ct, expected_ct_size, method_name)
         try:
             return fn(ct, sk)
         except Exception as e:
-            raise KyberError(str(e)) from e
+            raise KyberError(str(e)) from None
     return wrapper
 
 
@@ -34,7 +55,7 @@ def _wrap_keypair(fn: Callable[[], Tuple[bytes, bytes]]) -> Callable[[], Tuple[b
         try:
             return fn()
         except Exception as e:
-            raise KyberError(str(e)) from e
+            raise KyberError(str(e)) from None
     return wrapper
 
 
@@ -96,13 +117,15 @@ class Kyber512:
         """Generate a new key pair."""
         from . import _pykyber
         pk, sk = _wrap_keypair(_pykyber._keypair_512)()
-        return Keypair(sk, pk, _wrap_encapsulate(_pykyber._encapsulate_512), _wrap_decapsulate(_pykyber._decapsulate_512))
+        return Keypair(sk, pk, 
+                       _validate_encapsulate(_pykyber._encapsulate_512, Kyber512.PUBLIC_KEY_SIZE, "Kyber512"),
+                       _validate_decapsulate(_pykyber._decapsulate_512, Kyber512.CIPHERTEXT_SIZE, "Kyber512"))
     
     @staticmethod
     def encapsulate(public_key: bytes) -> EncapsulationResult:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
-        return EncapsulationResult(*_wrap_encapsulate(_pykyber._encapsulate_512)(public_key))
+        return EncapsulationResult(*_validate_encapsulate(_pykyber._encapsulate_512, Kyber512.PUBLIC_KEY_SIZE, "Kyber512.encapsulate")(public_key))
 
 
 class Kyber768:
@@ -117,13 +140,15 @@ class Kyber768:
         """Generate a new key pair."""
         from . import _pykyber
         pk, sk = _wrap_keypair(_pykyber._keypair_768)()
-        return Keypair(sk, pk, _wrap_encapsulate(_pykyber._encapsulate_768), _wrap_decapsulate(_pykyber._decapsulate_768))
+        return Keypair(sk, pk, 
+                       _validate_encapsulate(_pykyber._encapsulate_768, Kyber768.PUBLIC_KEY_SIZE, "Kyber768"),
+                       _validate_decapsulate(_pykyber._decapsulate_768, Kyber768.CIPHERTEXT_SIZE, "Kyber768"))
     
     @staticmethod
     def encapsulate(public_key: bytes) -> EncapsulationResult:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
-        return EncapsulationResult(*_wrap_encapsulate(_pykyber._encapsulate_768)(public_key))
+        return EncapsulationResult(*_validate_encapsulate(_pykyber._encapsulate_768, Kyber768.PUBLIC_KEY_SIZE, "Kyber768.encapsulate")(public_key))
 
 
 class Kyber1024:
@@ -131,17 +156,19 @@ class Kyber1024:
     
     PUBLIC_KEY_SIZE = 1568
     SECRET_KEY_SIZE = 3168
-    CIPHERTEXT_SIZE = 1568
+    CIPHERTEXT_SIZE = 1408
     SHARED_SECRET_SIZE = 32
     
     def __new__(cls) -> Keypair:
         """Generate a new key pair."""
         from . import _pykyber
         pk, sk = _wrap_keypair(_pykyber._keypair_1024)()
-        return Keypair(sk, pk, _wrap_encapsulate(_pykyber._encapsulate_1024), _wrap_decapsulate(_pykyber._decapsulate_1024))
+        return Keypair(sk, pk, 
+                       _validate_encapsulate(_pykyber._encapsulate_1024, Kyber1024.PUBLIC_KEY_SIZE, "Kyber1024"),
+                       _validate_decapsulate(_pykyber._decapsulate_1024, Kyber1024.CIPHERTEXT_SIZE, "Kyber1024"))
     
     @staticmethod
     def encapsulate(public_key: bytes) -> EncapsulationResult:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
-        return EncapsulationResult(*_wrap_encapsulate(_pykyber._encapsulate_1024)(public_key))
+        return EncapsulationResult(*_validate_encapsulate(_pykyber._encapsulate_1024, Kyber1024.PUBLIC_KEY_SIZE, "Kyber1024.encapsulate")(public_key))
