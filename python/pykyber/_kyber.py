@@ -4,6 +4,40 @@ from dataclasses import dataclass
 from typing import Tuple, Callable
 
 
+class KyberError(Exception):
+    """Kyber error exception - raised when invalid input is provided."""
+    pass
+
+def _wrap_encapsulate(fn: Callable[[bytes], Tuple[bytes, bytes]]) -> Callable[[bytes], Tuple[bytes, bytes]]:
+    """Wrap a Rust encapsulate function to raise KyberError on failure."""
+    def wrapper(pk: bytes) -> Tuple[bytes, bytes]:
+        try:
+            return fn(pk)
+        except Exception as e:
+            raise KyberError(str(e)) from e
+    return wrapper
+
+
+def _wrap_decapsulate(fn: Callable[[bytes, bytes], bytes]) -> Callable[[bytes, bytes], bytes]:
+    """Wrap a Rust decapsulate function to raise KyberError on failure."""
+    def wrapper(ct: bytes, sk: bytes) -> bytes:
+        try:
+            return fn(ct, sk)
+        except Exception as e:
+            raise KyberError(str(e)) from e
+    return wrapper
+
+
+def _wrap_keypair(fn: Callable[[], Tuple[bytes, bytes]]) -> Callable[[], Tuple[bytes, bytes]]:
+    """Wrap a Rust keypair function to raise KyberError on failure."""
+    def wrapper() -> Tuple[bytes, bytes]:
+        try:
+            return fn()
+        except Exception as e:
+            raise KyberError(str(e)) from e
+    return wrapper
+
+
 @dataclass(frozen=True)
 class EncapsulationResult:
     """Result of a Kyber encapsulation."""
@@ -61,14 +95,14 @@ class Kyber512:
     def __new__(cls) -> Keypair:
         """Generate a new key pair."""
         from . import _pykyber
-        pk, sk = _pykyber._keypair_512()
-        return Keypair(sk, pk, _pykyber._encapsulate_512, _pykyber._decapsulate_512)
+        pk, sk = _wrap_keypair(_pykyber._keypair_512)()
+        return Keypair(sk, pk, _wrap_encapsulate(_pykyber._encapsulate_512), _wrap_decapsulate(_pykyber._decapsulate_512))
     
     @staticmethod
     def encapsulate(public_key: bytes) -> EncapsulationResult:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
-        return EncapsulationResult(*_pykyber._encapsulate_512(public_key))
+        return EncapsulationResult(*_wrap_encapsulate(_pykyber._encapsulate_512)(public_key))
 
 
 class Kyber768:
@@ -82,14 +116,14 @@ class Kyber768:
     def __new__(cls) -> Keypair:
         """Generate a new key pair."""
         from . import _pykyber
-        pk, sk = _pykyber._keypair_768()
-        return Keypair(sk, pk, _pykyber._encapsulate_768, _pykyber._decapsulate_768)
+        pk, sk = _wrap_keypair(_pykyber._keypair_768)()
+        return Keypair(sk, pk, _wrap_encapsulate(_pykyber._encapsulate_768), _wrap_decapsulate(_pykyber._decapsulate_768))
     
     @staticmethod
     def encapsulate(public_key: bytes) -> EncapsulationResult:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
-        return EncapsulationResult(*_pykyber._encapsulate_768(public_key))
+        return EncapsulationResult(*_wrap_encapsulate(_pykyber._encapsulate_768)(public_key))
 
 
 class Kyber1024:
@@ -103,11 +137,11 @@ class Kyber1024:
     def __new__(cls) -> Keypair:
         """Generate a new key pair."""
         from . import _pykyber
-        pk, sk = _pykyber._keypair_1024()
-        return Keypair(sk, pk, _pykyber._encapsulate_1024, _pykyber._decapsulate_1024)
+        pk, sk = _wrap_keypair(_pykyber._keypair_1024)()
+        return Keypair(sk, pk, _wrap_encapsulate(_pykyber._encapsulate_1024), _wrap_decapsulate(_pykyber._decapsulate_1024))
     
     @staticmethod
     def encapsulate(public_key: bytes) -> EncapsulationResult:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
-        return EncapsulationResult(*_pykyber._encapsulate_1024(public_key))
+        return EncapsulationResult(*_wrap_encapsulate(_pykyber._encapsulate_1024)(public_key))

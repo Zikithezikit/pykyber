@@ -18,7 +18,11 @@ where
     R: CryptoRng + RngCore,
 {
     if pk.len() != KYBER_PUBLICKEYBYTES {
-        return Err(KyberError::InvalidInput);
+        return Err(KyberError::invalid_input(
+            "pk",
+            KYBER_PUBLICKEYBYTES,
+            pk.len(),
+        ));
     }
     let mut ct = [0u8; KYBER_CIPHERTEXTBYTES];
     let mut ss = [0u8; KYBER_SSBYTES];
@@ -27,11 +31,22 @@ where
 }
 
 pub fn decapsulate(ct: &[u8], sk: &[u8]) -> Decapsulated {
-    if ct.len() != KYBER_CIPHERTEXTBYTES || sk.len() != KYBER_SECRETKEYBYTES {
-        return Err(KyberError::InvalidInput);
+    if ct.len() != KYBER_CIPHERTEXTBYTES {
+        return Err(KyberError::invalid_input(
+            "ct",
+            KYBER_CIPHERTEXTBYTES,
+            ct.len(),
+        ));
+    }
+    if sk.len() != KYBER_SECRETKEYBYTES {
+        return Err(KyberError::invalid_input(
+            "sk",
+            KYBER_SECRETKEYBYTES,
+            sk.len(),
+        ));
     }
     let mut ss = [0u8; KYBER_SSBYTES];
-    crypto_kem_dec(&mut ss, ct, sk);
+    crypto_kem_dec(&mut ss, ct, sk)?;
     Ok(ss)
 }
 
@@ -69,7 +84,7 @@ pub fn derive(seed: &[u8]) -> Result<Keypair, KyberError> {
     let mut secret = [0u8; KYBER_SECRETKEYBYTES];
     let mut _rng = DummyRng {};
     if seed.len() != 64 {
-        return Err(KyberError::InvalidInput);
+        return Err(KyberError::invalid_input("seed", 64, seed.len()));
     }
     crypto_kem_keypair(
         &mut public,
