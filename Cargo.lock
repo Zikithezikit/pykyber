@@ -87,7 +87,7 @@ dependencies = [
 
 [[package]]
 name = "pykyber"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "pyo3",
  "rand",
