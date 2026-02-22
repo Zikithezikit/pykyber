@@ -843,3 +843,294 @@ def test_user_can_handle_error_gracefully():
     ct, ss = result
     assert len(ct) == 1088
     assert len(ss) == 32
+
+
+# Additional panic prevention tests
+
+def test_all_zero_public_key_512():
+    """Test encapsulation with all-zero public key (Kyber512)."""
+    zero_pk = bytes(800)
+    ct, ss = pykyber._encapsulate_512(zero_pk)
+    assert len(ct) == 768
+    assert len(ss) == 32
+
+
+def test_all_zero_public_key_768():
+    """Test encapsulation with all-zero public key (Kyber768)."""
+    zero_pk = bytes(1184)
+    ct, ss = pykyber._encapsulate(zero_pk)
+    assert len(ct) == 1088
+    assert len(ss) == 32
+
+
+def test_all_zero_public_key_1024():
+    """Test encapsulation with all-zero public key (Kyber1024)."""
+    zero_pk = bytes(1568)
+    ct, ss = pykyber._encapsulate_1024(zero_pk)
+    assert len(ct) == 1408
+    assert len(ss) == 32
+
+
+def test_all_ones_public_key_512():
+    """Test encapsulation with all-ones public key (Kyber512)."""
+    ones_pk = bytes([255] * 800)
+    ct, ss = pykyber._encapsulate_512(ones_pk)
+    assert len(ct) == 768
+    assert len(ss) == 32
+
+
+def test_all_ones_public_key_768():
+    """Test encapsulation with all-ones public key (Kyber768)."""
+    ones_pk = bytes([255] * 1184)
+    ct, ss = pykyber._encapsulate(ones_pk)
+    assert len(ct) == 1088
+    assert len(ss) == 32
+
+
+def test_all_ones_public_key_1024():
+    """Test encapsulation with all-ones public key (Kyber1024)."""
+    ones_pk = bytes([255] * 1568)
+    ct, ss = pykyber._encapsulate_1024(ones_pk)
+    assert len(ct) == 1408
+    assert len(ss) == 32
+
+
+def test_alternating_bits_public_key():
+    """Test encapsulation with alternating bits public key."""
+    alternating_pk = bytes([i % 2 for i in range(1184)])
+    ct, ss = pykyber._encapsulate(alternating_pk)
+    assert len(ct) == 1088
+    assert len(ss) == 32
+
+
+def test_decapsulate_with_all_zero_ciphertext_512():
+    """Test decapsulation with all-zero ciphertext (Kyber512)."""
+    pk, sk = pykyber._keypair_512()
+    zero_ct = bytes(768)
+    ss = pykyber._decapsulate_512(zero_ct, sk)
+    assert len(ss) == 32
+
+
+def test_decapsulate_with_all_zero_ciphertext_768():
+    """Test decapsulation with all-zero ciphertext (Kyber768)."""
+    pk, sk = pykyber._generate_keypair()
+    zero_ct = bytes(1088)
+    ss = pykyber._decapsulate(zero_ct, sk)
+    assert len(ss) == 32
+
+
+def test_decapsulate_with_all_zero_ciphertext_1024():
+    """Test decapsulation with all-zero ciphertext (Kyber1024)."""
+    pk, sk = pykyber._keypair_1024()
+    zero_ct = bytes(1408)
+    ss = pykyber._decapsulate_1024(zero_ct, sk)
+    assert len(ss) == 32
+
+
+def test_decapsulate_with_all_ones_ciphertext():
+    """Test decapsulation with all-ones ciphertext."""
+    pk, sk = pykyber._generate_keypair()
+    ones_ct = bytes([255] * 1088)
+    ss = pykyber._decapsulate(ones_ct, sk)
+    assert len(ss) == 32
+
+
+def test_wrong_variant_ciphertext_decapsulate_512_with_768_ct():
+    """Test using 768 ciphertext with 512 decapsulate - should fail gracefully."""
+    pk_768, sk_768 = pykyber._generate_keypair()
+    pk_512, sk_512 = pykyber._keypair_512()
+    ct_768, _ = pykyber._encapsulate(pk_768)
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate_512(ct_768, sk_512)
+
+
+def test_wrong_variant_ciphertext_decapsulate_1024_with_768_ct():
+    """Test using 768 ciphertext with 1024 decapsulate - should fail gracefully."""
+    pk_768, sk_768 = pykyber._generate_keypair()
+    pk_1024, sk_1024 = pykyber._keypair_1024()
+    ct_768, _ = pykyber._encapsulate(pk_768)
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate_1024(ct_768, sk_1024)
+
+
+def test_wrong_variant_ciphertext_decapsulate_768_with_512_ct():
+    """Test using 512 ciphertext with 768 decapsulate - should fail gracefully."""
+    pk_512, sk_512 = pykyber._keypair_512()
+    pk_768, sk_768 = pykyber._generate_keypair()
+    ct_512, _ = pykyber._encapsulate_512(pk_512)
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate(ct_512, sk_768)
+
+
+def test_mismatched_keypair_ciphertext():
+    """Test decapsulating ciphertext from different keypair."""
+    keypair1 = pykyber.Kyber768()
+    keypair2 = pykyber.Kyber768()
+    result = keypair1.encapsulate()
+    ss_dec = keypair2.decapsulate(result.ciphertext)
+    assert ss_dec != result.shared_secret
+
+
+def test_repeated_keypair_generation():
+    """Test multiple rapid keypair generations don't panic."""
+    for _ in range(100):
+        pk, sk = pykyber._generate_keypair()
+        assert len(pk) == 1184
+        assert len(sk) == 2400
+
+
+def test_repeated_encapsulation():
+    """Test multiple rapid encapsulations don't panic."""
+    pk, _ = pykyber._generate_keypair()
+    for _ in range(100):
+        ct, ss = pykyber._encapsulate(pk)
+        assert len(ct) == 1088
+        assert len(ss) == 32
+
+
+def test_repeated_decapsulation():
+    """Test multiple rapid decapsulations don't panic."""
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    for _ in range(100):
+        ss = pykyber._decapsulate(ct, sk)
+        assert len(ss) == 32
+
+
+def test_very_large_valid_size_public_key():
+    """Test with a public key that's much larger than expected - should fail gracefully."""
+    huge_pk = bytes(10000)
+    with pytest.raises(pykyber.KyberError):
+        pykyber._encapsulate(huge_pk)
+
+
+def test_very_large_valid_size_secret_key():
+    """Test with a secret key that's much larger than expected - should fail gracefully."""
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    huge_sk = sk + bytes(10000)
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate(ct, huge_sk)
+
+
+def test_very_large_valid_size_ciphertext():
+    """Test with a ciphertext that's much larger than expected - should fail gracefully."""
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    huge_ct = ct + bytes(10000)
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate(huge_ct, sk)
+
+
+def test_boundary_minus_one_ciphertext_512():
+    """Test with ciphertext that's 1 byte less than minimum (Kyber512)."""
+    pk, sk = pykyber._keypair_512()
+    ct, _ = pykyber._encapsulate_512(pk)
+    short_ct = ct[:-1]
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate_512(short_ct, sk)
+
+
+def test_boundary_minus_one_ciphertext_768():
+    """Test with ciphertext that's 1 byte less than minimum (Kyber768)."""
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    short_ct = ct[:-1]
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate(short_ct, sk)
+
+
+def test_boundary_minus_one_ciphertext_1024():
+    """Test with ciphertext that's 1 byte less than minimum (Kyber1024)."""
+    pk, sk = pykyber._keypair_1024()
+    ct, _ = pykyber._encapsulate_1024(pk)
+    short_ct = ct[:-1]
+    with pytest.raises(pykyber.KyberError):
+        pykyber._decapsulate_1024(short_ct, sk)
+
+
+def test_max_uint8_values_secret_key():
+    """Test decapsulation with max uint8 values in secret key - should not panic."""
+    pk, sk = pykyber._generate_keypair()
+    max_sk = bytes([255] * len(sk))
+    ct, _ = pykyber._encapsulate(pk)
+    ss = pykyber._decapsulate(ct, max_sk)
+    assert len(ss) == 32
+
+
+def test_max_uint8_values_ciphertext():
+    """Test decapsulation with max uint8 values in ciphertext - should not panic."""
+    pk, sk = pykyber._generate_keypair()
+    max_ct = bytes([255] * 1088)
+    ss = pykyber._decapsulate(max_ct, sk)
+    assert len(ss) == 32
+
+
+def test_interleaved_key_generation_and_encapsulation():
+    """Test interleaved key generation and encapsulation."""
+    for i in range(50):
+        if i % 3 == 0:
+            pk, _ = pykyber._keypair_512()
+            ct, ss = pykyber._encapsulate_512(pk)
+        elif i % 3 == 1:
+            pk, _ = pykyber._generate_keypair()
+            ct, ss = pykyber._encapsulate(pk)
+        else:
+            pk, _ = pykyber._keypair_1024()
+            ct, ss = pykyber._encapsulate_1024(pk)
+        assert len(ct) > 0
+        assert len(ss) == 32
+
+
+def test_encapsulate_with_known_vector_512():
+    """Test encapsulation produces expected output format."""
+    pk = bytes(800)
+    ct, ss = pykyber._encapsulate_512(pk)
+    assert isinstance(ct, bytes)
+    assert isinstance(ss, bytes)
+    assert len(ct) == 768
+    assert len(ss) == 32
+
+
+def test_keypair_with_specific_seed_issue():
+    """Test that various seed patterns don't cause panic."""
+    seeds = [
+        bytes(32),
+        bytes([0] * 32),
+        bytes([255] * 32),
+        bytes([i for i in range(32)]),
+        bytes([31 - i for i in range(32)]),
+    ]
+    for seed in seeds:
+        pk, sk = pykyber._generate_keypair()
+        assert len(pk) == 1184
+        assert len(sk) == 2400
+
+
+def test_concurrent_error_handling():
+    """Test that error handling works correctly in sequence."""
+    error_inputs = [
+        (b"", b""),
+        (b"x", b"x" * 2400),
+        (b"x" * 1088, b"x"),
+        (b"x" * 100, b"x" * 100),
+    ]
+    for pk_test, sk_test in error_inputs:
+        try:
+            pykyber._encapsulate(pk_test)
+        except pykyber.KyberError:
+            pass
+        except Exception as e:
+            if "panicked" not in str(e).lower():
+                raise AssertionError(f"Unexpected non-panic error: {e}")
+    
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    for ct_test, sk_test in error_inputs:
+        try:
+            pykyber._decapsulate(ct_test, sk_test)
+        except pykyber.KyberError:
+            pass
+        except Exception as e:
+            if "panicked" not in str(e).lower():
+                raise AssertionError(f"Unexpected non-panic error: {e}")

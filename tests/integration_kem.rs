@@ -1,6 +1,6 @@
 //! Integration tests for Kyber KEM
 
-use pykyber::kyber::api::{decapsulate, encapsulate, keypair, Keypair};
+use pykyber::kyber::api::{decapsulate, encapsulate, keypair};
 use pykyber::kyber::crypto_kem_dec_1024;
 use pykyber::kyber::crypto_kem_dec_512;
 use pykyber::kyber::crypto_kem_enc_1024;
@@ -56,7 +56,7 @@ fn test_kyber_512_encapsulate_decapsulate() {
     assert_eq!(ss.len(), KYBER_SSBYTES);
 
     let mut ss2 = vec![0u8; KYBER_SSBYTES];
-    crypto_kem_dec_512(&mut ss2, &ct, &sk);
+    crypto_kem_dec_512(&mut ss2, &ct, &sk).unwrap();
     assert_eq!(ss, ss2);
 }
 
@@ -88,7 +88,7 @@ fn test_kyber_1024_encapsulate_decapsulate() {
     assert_eq!(ss.len(), KYBER_SSBYTES);
 
     let mut ss2 = vec![0u8; KYBER_SSBYTES];
-    crypto_kem_dec_1024(&mut ss2, &ct, &sk);
+    crypto_kem_dec_1024(&mut ss2, &ct, &sk).unwrap();
     assert_eq!(ss, ss2);
 }
 
