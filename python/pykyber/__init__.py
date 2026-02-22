@@ -6,6 +6,8 @@ from ._kyber import (
     Kyber1024,
 )
 
+__all__ = ["Kyber512", "Kyber768", "Kyber1024"]
+
 # Import underscored functions from Rust
 from ._pykyber import (
     _generate_keypair,
