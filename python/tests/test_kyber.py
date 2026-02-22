@@ -456,3 +456,390 @@ def test_encapsulate_static_method_kyber1024():
     
     ss = keypair.decapsulate(result.ciphertext)
     assert ss == result.shared_secret
+
+
+# Error handling tests - comprehensive
+
+def test_kyber_error_can_be_imported():
+    """Test that KyberError can be imported."""
+    assert pykyber.KyberError is not None
+    assert issubclass(pykyber.KyberError, Exception)
+
+
+def test_invalid_public_key_length_raises_error():
+    """Test that invalid public key length raises KyberError."""
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate(b"short")
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+
+
+def test_invalid_ciphertext_length_raises_error():
+    """Test that invalid ciphertext length raises KyberError."""
+    sk = bytes(2400)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(b"short", sk)
+    assert "Invalid input for 'ct'" in str(exc_info.value)
+
+
+def test_invalid_secret_key_length_raises_error():
+    """Test that invalid secret key length raises KyberError."""
+    ct = bytes(1088)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(ct, b"short")
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_empty_public_key_raises_error():
+    """Test that empty public key raises KyberError."""
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate(b"")
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+
+
+def test_empty_ciphertext_raises_error():
+    """Test that empty ciphertext raises KyberError."""
+    pk, sk = pykyber._generate_keypair()
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(b"", sk)
+    assert "Invalid input for 'ct'" in str(exc_info.value)
+
+
+def test_empty_secret_key_raises_error():
+    """Test that empty secret key raises KyberError."""
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(ct, b"")
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_very_long_input_raises_error():
+    """Test that too long inputs raise KyberError."""
+    pk, sk = pykyber._generate_keypair()
+    long_pk = pk + b"extra"
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate(long_pk)
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+
+
+def test_kyber512_invalid_public_key_length():
+    """Test Kyber512 with invalid public key length."""
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate_512(b"short")
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+
+
+def test_kyber512_invalid_ciphertext_length():
+    """Test Kyber512 with invalid ciphertext length."""
+    sk = bytes(1632)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_512(b"short", sk)
+    assert "Invalid input for 'ct'" in str(exc_info.value)
+
+
+def test_kyber512_invalid_secret_key_length():
+    """Test Kyber512 with invalid secret key length."""
+    ct = bytes(768)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_512(ct, b"short")
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_kyber1024_invalid_public_key_length():
+    """Test Kyber1024 with invalid public key length."""
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate_1024(b"short")
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+
+
+def test_kyber1024_invalid_ciphertext_length():
+    """Test Kyber1024 with invalid ciphertext length."""
+    sk = bytes(3168)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_1024(b"short", sk)
+    assert "Invalid input for 'ct'" in str(exc_info.value)
+
+
+def test_kyber1024_invalid_secret_key_length():
+    """Test Kyber1024 with invalid secret key length."""
+    ct = bytes(1408)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_1024(ct, b"short")
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_boundary_public_key_length_512():
+    """Test with Kyber512 public key that's 1 byte too short."""
+    pk, _ = pykyber._keypair_512()
+    short_pk = pk[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate_512(short_pk)
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "800" in str(exc_info.value)
+    assert "799" in str(exc_info.value)
+
+
+def test_boundary_public_key_length_768():
+    """Test with Kyber768 public key that's 1 byte too short."""
+    pk, _ = pykyber._keypair_768()
+    short_pk = pk[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate(short_pk)
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "1184" in str(exc_info.value)
+    assert "1183" in str(exc_info.value)
+
+
+def test_boundary_public_key_length_1024():
+    """Test with Kyber1024 public key that's 1 byte too short."""
+    pk, _ = pykyber._keypair_1024()
+    short_pk = pk[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate_1024(short_pk)
+    assert "Invalid input for 'pk'" in str(exc_info.value)
+    assert "1568" in str(exc_info.value)
+    assert "1567" in str(exc_info.value)
+
+
+def test_boundary_secret_key_length_512():
+    """Test with Kyber512 secret key that's 1 byte too short."""
+    _, sk = pykyber._keypair_512()
+    ct, _ = pykyber._encapsulate_512(sk[:800])
+    short_sk = sk[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_512(ct, short_sk)
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_boundary_secret_key_length_768():
+    """Test with Kyber768 secret key that's 1 byte too short."""
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    short_sk = sk[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(ct, short_sk)
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_boundary_secret_key_length_1024():
+    """Test with Kyber1024 secret key that's 1 byte too short."""
+    pk, sk = pykyber._keypair_1024()
+    ct, _ = pykyber._encapsulate_1024(pk)
+    short_sk = sk[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_1024(ct, short_sk)
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_boundary_ciphertext_length_512():
+    """Test with Kyber512 ciphertext that's 1 byte too short."""
+    pk, sk = pykyber._keypair_512()
+    ct, _ = pykyber._encapsulate_512(pk)
+    short_ct = ct[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_512(short_ct, sk)
+    assert "Invalid input for 'ct'" in str(exc_info.value)
+
+
+def test_boundary_ciphertext_length_768():
+    """Test with Kyber768 ciphertext that's 1 byte too short."""
+    pk, sk = pykyber._generate_keypair()
+    ct, _ = pykyber._encapsulate(pk)
+    short_ct = ct[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(short_ct, sk)
+    assert "Invalid input for 'ct'" in str(exc_info.value)
+
+
+def test_boundary_ciphertext_length_1024():
+    """Test with Kyber1024 ciphertext that's 1 byte too short."""
+    pk, sk = pykyber._keypair_1024()
+    ct, _ = pykyber._encapsulate_1024(pk)
+    short_ct = ct[:-1]
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate_1024(short_ct, sk)
+    assert "Invalid input for 'ct'" in str(exc_info.value)
+
+
+def test_error_can_be_caught_as_exception():
+    """Test that KyberError can be caught as generic Exception."""
+    try:
+        pykyber._encapsulate(b"short")
+        assert False, "Should have raised"
+    except Exception as e:
+        assert isinstance(e, pykyber.KyberError)
+
+
+def test_error_message_contains_useful_info():
+    """Test that error messages contain parameter name and sizes."""
+    pk, sk = pykyber._generate_keypair()
+    
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._encapsulate(b"x" * 100)
+    msg = str(exc_info.value)
+    assert "pk" in msg
+    assert "expected" in msg or "bytes" in msg
+    
+    ct, _ = pykyber._encapsulate(pk)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(ct, b"x" * 100)
+    msg = str(exc_info.value)
+    assert "sk" in msg
+    
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber._decapsulate(b"x" * 100, sk)
+    msg = str(exc_info.value)
+    assert "ct" in msg
+
+
+def test_wrong_key_type_raises_error():
+    """Test that passing wrong types raises appropriate error."""
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._encapsulate(12345)
+    
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._decapsulate(None, None)
+
+
+def test_all_variants_of_error():
+    """Test that different error variants produce appropriate messages."""
+    with pytest.raises(pykyber.KyberError):
+        pykyber._encapsulate(b"")
+    
+    with pytest.raises(pykyber.KyberError):
+        pk, _ = pykyber._generate_keypair()
+        pykyber._decapsulate(pk, b"")
+
+
+def test_multiple_error_types_in_sequence():
+    """Test catching different errors in sequence."""
+    errors = []
+    
+    try:
+        pykyber._encapsulate(b"x")
+    except pykyber.KyberError:
+        errors.append("invalid_pk")
+    
+    pk, sk = pykyber._generate_keypair()
+    try:
+        pykyber._decapsulate(b"x", sk)
+    except pykyber.KyberError:
+        errors.append("invalid_ct")
+    
+    try:
+        pykyber._decapsulate(pk, b"x")
+    except pykyber.KyberError:
+        errors.append("invalid_sk")
+    
+    assert len(errors) == 3
+    assert "invalid_pk" in errors
+    assert "invalid_ct" in errors
+    assert "invalid_sk" in errors
+
+
+def test_error_is_subclass_of_exception():
+    """Test that KyberError is properly a subclass of Exception."""
+    assert issubclass(pykyber.KyberError, Exception)
+    e = pykyber.KyberError("test")
+    assert isinstance(e, Exception)
+    assert str(e) == "test"
+
+
+def test_class_api_error_handling_kyber512():
+    """Test error handling in Kyber512 class API."""
+    keypair = pykyber.Kyber512()
+    
+    with pytest.raises(pykyber.KyberError):
+        pykyber.Kyber512.encapsulate(b"short")
+    
+    with pytest.raises(pykyber.KyberError):
+        keypair.decapsulate(b"short")
+
+
+def test_class_api_error_handling_kyber768():
+    """Test error handling in Kyber768 class API."""
+    keypair = pykyber.Kyber768()
+    
+    with pytest.raises(pykyber.KyberError):
+        pykyber.Kyber768.encapsulate(b"short")
+    
+    with pytest.raises(pykyber.KyberError):
+        keypair.decapsulate(b"short")
+
+
+def test_class_api_error_handling_kyber1024():
+    """Test error handling in Kyber1024 class API."""
+    keypair = pykyber.Kyber1024()
+    
+    with pytest.raises(pykyber.KyberError):
+        pykyber.Kyber1024.encapsulate(b"short")
+    
+    with pytest.raises(pykyber.KyberError):
+        keypair.decapsulate(b"short")
+
+
+def test_error_with_none_values():
+    """Test that None values raise appropriate errors."""
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._encapsulate(None)
+    
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._decapsulate(None, b"x" * 2400)
+    
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._decapsulate(b"x" * 1088, None)
+
+
+def test_error_with_list_input():
+    """Test that list input raises appropriate error."""
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._encapsulate([1, 2, 3])
+    
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._decapsulate([1, 2, 3], b"x" * 2400)
+
+
+def test_error_with_integer_input():
+    """Test that integer input raises appropriate error."""
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._encapsulate(12345)
+    
+    with pytest.raises((pykyber.KyberError, TypeError)):
+        pykyber._decapsulate(12345, b"x" * 2400)
+
+
+def test_keypair_functions_error_handling():
+    """Test that keypair functions still work correctly."""
+    pk, sk = pykyber._keypair_512()
+    assert len(pk) == 800
+    assert len(sk) == 1632
+    
+    pk, sk = pykyber._keypair_768()
+    assert len(pk) == 1184
+    assert len(sk) == 2400
+    
+    pk, sk = pykyber._keypair_1024()
+    assert len(pk) == 1568
+    assert len(sk) == 3168
+
+
+def test_user_can_handle_error_gracefully():
+    """Test that a user can handle the error gracefully."""
+    def safe_encapsulate(public_key):
+        """Example of user handling the error."""
+        try:
+            return pykyber._encapsulate(public_key)
+        except pykyber.KyberError as e:
+            return f"Error: {e}"
+        except Exception as e:
+            return f"Unexpected error: {e}"
+    
+    result = safe_encapsulate(b"short")
+    assert "Error:" in result
+    assert "Invalid input" in result
+    
+    pk, _ = pykyber._generate_keypair()
+    result = safe_encapsulate(pk)
+    ct, ss = result
+    assert len(ct) == 1088
+    assert len(ss) == 32

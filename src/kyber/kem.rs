@@ -65,7 +65,25 @@ where
     Ok(())
 }
 
-pub fn crypto_kem_dec(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> () {
+pub fn crypto_kem_dec(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), KyberError> {
+    if ct.len() != KYBER_CIPHERTEXTBYTES {
+        return Err(KyberError::invalid_input(
+            "ct",
+            KYBER_CIPHERTEXTBYTES,
+            ct.len(),
+        ));
+    }
+    if sk.len() != KYBER_SECRETKEYBYTES {
+        return Err(KyberError::invalid_input(
+            "sk",
+            KYBER_SECRETKEYBYTES,
+            sk.len(),
+        ));
+    }
+    if ss.len() != KYBER_SSBYTES {
+        return Err(KyberError::invalid_input("ss", KYBER_SSBYTES, ss.len()));
+    }
+
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut cmp = [0u8; KYBER_CIPHERTEXTBYTES];
@@ -85,6 +103,7 @@ pub fn crypto_kem_dec(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> () {
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
     cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    Ok(())
 }
 
 pub fn crypto_kem_keypair_512<R>(
@@ -145,7 +164,25 @@ where
     Ok(())
 }
 
-pub fn crypto_kem_dec_512(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> () {
+pub fn crypto_kem_dec_512(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), KyberError> {
+    if ct.len() != KYBER_512_CIPHERTEXTBYTES {
+        return Err(KyberError::invalid_input(
+            "ct",
+            KYBER_512_CIPHERTEXTBYTES,
+            ct.len(),
+        ));
+    }
+    if sk.len() != KYBER_512_SECRETKEYBYTES {
+        return Err(KyberError::invalid_input(
+            "sk",
+            KYBER_512_SECRETKEYBYTES,
+            sk.len(),
+        ));
+    }
+    if ss.len() != KYBER_SSBYTES {
+        return Err(KyberError::invalid_input("ss", KYBER_SSBYTES, ss.len()));
+    }
+
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut cmp = [0u8; KYBER_512_CIPHERTEXTBYTES];
@@ -165,6 +202,7 @@ pub fn crypto_kem_dec_512(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> () {
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_512_CIPHERTEXTBYTES);
     cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    Ok(())
 }
 
 pub fn crypto_kem_keypair_1024<R>(
@@ -225,7 +263,25 @@ where
     Ok(())
 }
 
-pub fn crypto_kem_dec_1024(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> () {
+pub fn crypto_kem_dec_1024(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), KyberError> {
+    if ct.len() != KYBER_1024_CIPHERTEXTBYTES {
+        return Err(KyberError::invalid_input(
+            "ct",
+            KYBER_1024_CIPHERTEXTBYTES,
+            ct.len(),
+        ));
+    }
+    if sk.len() != KYBER_1024_SECRETKEYBYTES {
+        return Err(KyberError::invalid_input(
+            "sk",
+            KYBER_1024_SECRETKEYBYTES,
+            sk.len(),
+        ));
+    }
+    if ss.len() != KYBER_SSBYTES {
+        return Err(KyberError::invalid_input("ss", KYBER_SSBYTES, ss.len()));
+    }
+
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut cmp = [0u8; KYBER_1024_CIPHERTEXTBYTES];
@@ -245,4 +301,5 @@ pub fn crypto_kem_dec_1024(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> () {
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_1024_CIPHERTEXTBYTES);
     cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    Ok(())
 }
