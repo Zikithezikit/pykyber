@@ -1235,3 +1235,274 @@ def test_static_decapsulate_invalid_secret_key_length_kyber1024():
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber.Kyber1024.decapsulate(ct, b"short")
     assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+# Stress tests
+
+def test_stress_kyber512_many_operations():
+    """Stress test: many keypair generations and encapsulations (Kyber512)."""
+    for _ in range(1000):
+        pk, sk = pykyber._keypair_512()
+        ct, ss = pykyber._encapsulate_512(pk)
+        ss_dec = pykyber._decapsulate_512(ct, sk)
+        assert ss == ss_dec
+
+
+def test_stress_kyber768_many_operations():
+    """Stress test: many keypair generations and encapsulations (Kyber768)."""
+    for _ in range(1000):
+        pk, sk = pykyber._keypair_768()
+        ct, ss = pykyber._encapsulate_768(pk)
+        ss_dec = pykyber._decapsulate_768(ct, sk)
+        assert ss == ss_dec
+
+
+def test_stress_kyber1024_many_operations():
+    """Stress test: many keypair generations and encapsulations (Kyber1024)."""
+    for _ in range(1000):
+        pk, sk = pykyber._keypair_1024()
+        ct, ss = pykyber._encapsulate_1024(pk)
+        ss_dec = pykyber._decapsulate_1024(ct, sk)
+        assert ss == ss_dec
+
+
+def test_stress_class_api_kyber512():
+    """Stress test: class API with many operations (Kyber512)."""
+    for _ in range(1000):
+        keypair = pykyber.Kyber512()
+        result = keypair.encapsulate()
+        ss = keypair.decapsulate(result.ciphertext)
+        assert result.shared_secret == ss
+
+
+def test_stress_class_api_kyber768():
+    """Stress test: class API with many operations (Kyber768)."""
+    for _ in range(1000):
+        keypair = pykyber.Kyber768()
+        result = keypair.encapsulate()
+        ss = keypair.decapsulate(result.ciphertext)
+        assert result.shared_secret == ss
+
+
+def test_stress_class_api_kyber1024():
+    """Stress test: class API with many operations (Kyber1024)."""
+    for _ in range(1000):
+        keypair = pykyber.Kyber1024()
+        result = keypair.encapsulate()
+        ss = keypair.decapsulate(result.ciphertext)
+        assert result.shared_secret == ss
+
+
+def test_stress_static_methods_kyber512():
+    """Stress test: static methods without keypair (Kyber512)."""
+    for _ in range(1000):
+        pk, sk = pykyber._keypair_512()
+        result = pykyber.Kyber512.encapsulate(pk)
+        ss = pykyber.Kyber512.decapsulate(result.ciphertext, sk)
+        assert result.shared_secret == ss
+
+
+def test_stress_static_methods_kyber768():
+    """Stress test: static methods without keypair (Kyber768)."""
+    for _ in range(1000):
+        pk, sk = pykyber._keypair_768()
+        result = pykyber.Kyber768.encapsulate(pk)
+        ss = pykyber.Kyber768.decapsulate(result.ciphertext, sk)
+        assert result.shared_secret == ss
+
+
+def test_stress_static_methods_kyber1024():
+    """Stress test: static methods without keypair (Kyber1024)."""
+    for _ in range(1000):
+        pk, sk = pykyber._keypair_1024()
+        result = pykyber.Kyber1024.encapsulate(pk)
+        ss = pykyber.Kyber1024.decapsulate(result.ciphertext, sk)
+        assert result.shared_secret == ss
+
+
+def test_stress_mixed_variants():
+    """Stress test: mixed variants in sequence."""
+    for _ in range(333):
+        pk_512, sk_512 = pykyber._keypair_512()
+        ct_512, ss_512 = pykyber._encapsulate_512(pk_512)
+        ss_512_dec = pykyber._decapsulate_512(ct_512, sk_512)
+        assert ss_512 == ss_512_dec
+
+        pk_768, sk_768 = pykyber._keypair_768()
+        ct_768, ss_768 = pykyber._encapsulate_768(pk_768)
+        ss_768_dec = pykyber._decapsulate_768(ct_768, sk_768)
+        assert ss_768 == ss_768_dec
+
+        pk_1024, sk_1024 = pykyber._keypair_1024()
+        ct_1024, ss_1024 = pykyber._encapsulate_1024(pk_1024)
+        ss_1024_dec = pykyber._decapsulate_1024(ct_1024, sk_1024)
+        assert ss_1024 == ss_1024_dec
+
+
+# Performance tests
+
+def test_performance_kyber512_keypair_generation():
+    """Performance test: measure time for 100 keypair generations (Kyber512)."""
+    import time
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._keypair_512()
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber512 keypair generation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0  # Should complete 100 iterations in under 5 seconds
+
+
+def test_performance_kyber768_keypair_generation():
+    """Performance test: measure time for 100 keypair generations (Kyber768)."""
+    import time
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._keypair_768()
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber768 keypair generation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_kyber1024_keypair_generation():
+    """Performance test: measure time for 100 keypair generations (Kyber1024)."""
+    import time
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._keypair_1024()
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber1024 keypair generation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_kyber512_encapsulation():
+    """Performance test: measure time for 100 encapsulations (Kyber512)."""
+    import time
+    pk, _ = pykyber._keypair_512()
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._encapsulate_512(pk)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber512 encapsulation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_kyber768_encapsulation():
+    """Performance test: measure time for 100 encapsulations (Kyber768)."""
+    import time
+    pk, _ = pykyber._keypair_768()
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._encapsulate_768(pk)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber768 encapsulation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_kyber1024_encapsulation():
+    """Performance test: measure time for 100 encapsulations (Kyber1024)."""
+    import time
+    pk, _ = pykyber._keypair_1024()
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._encapsulate_1024(pk)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber1024 encapsulation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_kyber512_decapsulation():
+    """Performance test: measure time for 100 decapsulations (Kyber512)."""
+    import time
+    pk, sk = pykyber._keypair_512()
+    ct, _ = pykyber._encapsulate_512(pk)
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._decapsulate_512(ct, sk)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber512 decapsulation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_kyber768_decapsulation():
+    """Performance test: measure time for 100 decapsulations (Kyber768)."""
+    import time
+    pk, sk = pykyber._keypair_768()
+    ct, _ = pykyber._encapsulate_768(pk)
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._decapsulate_768(ct, sk)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber768 decapsulation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_kyber1024_decapsulation():
+    """Performance test: measure time for 100 decapsulations (Kyber1024)."""
+    import time
+    pk, sk = pykyber._keypair_1024()
+    ct, _ = pykyber._encapsulate_1024(pk)
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pykyber._decapsulate_1024(ct, sk)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber1024 decapsulation: {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_class_api_kyber768():
+    """Performance test: class API full key exchange (Kyber768)."""
+    import time
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        keypair = pykyber.Kyber768()
+        result = keypair.encapsulate()
+        keypair.decapsulate(result.ciphertext)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber768 full key exchange (class API): {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
+
+
+def test_performance_static_methods_kyber768():
+    """Performance test: static methods full key exchange (Kyber768)."""
+    import time
+    iterations = 100
+    
+    start = time.perf_counter()
+    for _ in range(iterations):
+        pk, sk = pykyber._keypair_768()
+        result = pykyber.Kyber768.encapsulate(pk)
+        pykyber.Kyber768.decapsulate(result.ciphertext, sk)
+    elapsed = time.perf_counter() - start
+    
+    print(f"\nKyber768 full key exchange (static methods): {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
+    assert elapsed < 5.0
