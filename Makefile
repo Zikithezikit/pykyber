@@ -13,3 +13,6 @@ clean:
 	rm ./python/pykyber/*.so
 	rm ./python/pykyber/_pykyber.pyi
 	rm -rf ./target/
+
+benchmark:
+	.venv/bin/python performance-tests/benchmark.py

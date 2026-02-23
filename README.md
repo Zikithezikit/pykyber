@@ -87,6 +87,37 @@ Common error cases:
 - **Invalid secret key size**: Wrong number of bytes for the Kyber variant
 
 
+## Performance
+
+Performance benchmarks (100 iterations each):
+
+| Variant | Keypair | Encapsulate | Decapsulate |
+|---------|---------|-------------|-------------|
+| Kyber512 | 0.27 ms (3,667/s) | 0.39 ms (2,548/s) | 0.48 ms (2,101/s) |
+| Kyber768 | 0.48 ms (2,069/s) | 0.62 ms (1,605/s) | 0.78 ms (1,279/s) |
+| Kyber1024 | 0.78 ms (1,289/s) | 0.94 ms (1,064/s) | 1.04 ms (959/s) |
+
+Run benchmarks and generate graphs:
+
+```bash
+make benchmark
+```
+
+Generated graphs:
+
+### Performance Comparison
+![Performance Comparison](performance-tests/performance_comparison.png)
+
+### Operation Breakdown
+![Operation Breakdown](performance-tests/operation_breakdown.png)
+
+### Scalability
+![Scalability](performance-tests/scalability.png)
+
+### Throughput
+![Throughput](performance-tests/throughput.png)
+
+
 ## License
 
 MIT
