@@ -1134,3 +1134,104 @@ def test_concurrent_error_handling():
         except Exception as e:
             if "panicked" not in str(e).lower():
                 raise AssertionError(f"Unexpected non-panic error: {e}")
+
+
+# Static decapsulate method tests
+
+def test_static_decapsulate_kyber512():
+    """Test static decapsulate method for Kyber512."""
+    pk, sk = pykyber._keypair_512()
+    ct, ss = pykyber._encapsulate_512(pk)
+    ss_dec = pykyber.Kyber512.decapsulate(ct, sk)
+    assert ss == ss_dec
+
+
+def test_static_decapsulate_kyber768():
+    """Test static decapsulate method for Kyber768."""
+    pk, sk = pykyber._keypair_768()
+    ct, ss = pykyber._encapsulate_768(pk)
+    ss_dec = pykyber.Kyber768.decapsulate(ct, sk)
+    assert ss == ss_dec
+
+
+def test_static_decapsulate_kyber1024():
+    """Test static decapsulate method for Kyber1024."""
+    pk, sk = pykyber._keypair_1024()
+    ct, ss = pykyber._encapsulate_1024(pk)
+    ss_dec = pykyber.Kyber1024.decapsulate(ct, sk)
+    assert ss == ss_dec
+
+
+def test_static_decapsulate_vs_instance_decapsulate_kyber512():
+    """Test that static and instance decapsulate produce same result (Kyber512)."""
+    keypair = pykyber.Kyber512()
+    result = keypair.encapsulate()
+    ss_instance = keypair.decapsulate(result.ciphertext)
+    ss_static = pykyber.Kyber512.decapsulate(result.ciphertext, keypair.secret_key)
+    assert ss_instance == ss_static
+
+
+def test_static_decapsulate_vs_instance_decapsulate_kyber768():
+    """Test that static and instance decapsulate produce same result (Kyber768)."""
+    keypair = pykyber.Kyber768()
+    result = keypair.encapsulate()
+    ss_instance = keypair.decapsulate(result.ciphertext)
+    ss_static = pykyber.Kyber768.decapsulate(result.ciphertext, keypair.secret_key)
+    assert ss_instance == ss_static
+
+
+def test_static_decapsulate_vs_instance_decapsulate_kyber1024():
+    """Test that static and instance decapsulate produce same result (Kyber1024)."""
+    keypair = pykyber.Kyber1024()
+    result = keypair.encapsulate()
+    ss_instance = keypair.decapsulate(result.ciphertext)
+    ss_static = pykyber.Kyber1024.decapsulate(result.ciphertext, keypair.secret_key)
+    assert ss_instance == ss_static
+
+
+def test_static_decapsulate_invalid_ciphertext_length_kyber512():
+    """Test static decapsulate with invalid ciphertext length (Kyber512)."""
+    sk = bytes(1632)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber.Kyber512.decapsulate(b"short", sk)
+    assert "Invalid ciphertext" in str(exc_info.value)
+
+
+def test_static_decapsulate_invalid_secret_key_length_kyber512():
+    """Test static decapsulate with invalid secret key length (Kyber512)."""
+    ct = bytes(768)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber.Kyber512.decapsulate(ct, b"short")
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_static_decapsulate_invalid_ciphertext_length_kyber768():
+    """Test static decapsulate with invalid ciphertext length (Kyber768)."""
+    sk = bytes(2400)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber.Kyber768.decapsulate(b"short", sk)
+    assert "Invalid ciphertext" in str(exc_info.value)
+
+
+def test_static_decapsulate_invalid_secret_key_length_kyber768():
+    """Test static decapsulate with invalid secret key length (Kyber768)."""
+    ct = bytes(1088)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber.Kyber768.decapsulate(ct, b"short")
+    assert "Invalid input for 'sk'" in str(exc_info.value)
+
+
+def test_static_decapsulate_invalid_ciphertext_length_kyber1024():
+    """Test static decapsulate with invalid ciphertext length (Kyber1024)."""
+    sk = bytes(3168)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber.Kyber1024.decapsulate(b"short", sk)
+    assert "Invalid ciphertext" in str(exc_info.value)
+
+
+def test_static_decapsulate_invalid_secret_key_length_kyber1024():
+    """Test static decapsulate with invalid secret key length (Kyber1024)."""
+    ct = bytes(1408)
+    with pytest.raises(pykyber.KyberError) as exc_info:
+        pykyber.Kyber1024.decapsulate(ct, b"short")
+    assert "Invalid input for 'sk'" in str(exc_info.value)

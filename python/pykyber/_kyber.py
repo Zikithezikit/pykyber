@@ -26,6 +26,12 @@ class Kyber512:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
         return EncapsulationResult(*_validate_encapsulate(_pykyber._encapsulate_512, Kyber512.PUBLIC_KEY_SIZE, "Kyber512.encapsulate")(public_key))
+    
+    @staticmethod
+    def decapsulate(ciphertext: bytes, secret_key: bytes) -> bytes:
+        """Decapsulate a shared secret using ciphertext and secret key (no keypair needed)."""
+        from . import _pykyber
+        return _validate_decapsulate(_pykyber._decapsulate_512, Kyber512.CIPHERTEXT_SIZE, "Kyber512.decapsulate")(ciphertext, secret_key)
 
 
 class Kyber768:
@@ -49,6 +55,12 @@ class Kyber768:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
         return EncapsulationResult(*_validate_encapsulate(_pykyber._encapsulate_768, Kyber768.PUBLIC_KEY_SIZE, "Kyber768.encapsulate")(public_key))
+    
+    @staticmethod
+    def decapsulate(ciphertext: bytes, secret_key: bytes) -> bytes:
+        """Decapsulate a shared secret using ciphertext and secret key (no keypair needed)."""
+        from . import _pykyber
+        return _validate_decapsulate(_pykyber._decapsulate_768, Kyber768.CIPHERTEXT_SIZE, "Kyber768.decapsulate")(ciphertext, secret_key)
 
 
 class Kyber1024:
@@ -72,3 +84,9 @@ class Kyber1024:
         """Encapsulate a shared secret using a public key (no keypair needed)."""
         from . import _pykyber
         return EncapsulationResult(*_validate_encapsulate(_pykyber._encapsulate_1024, Kyber1024.PUBLIC_KEY_SIZE, "Kyber1024.encapsulate")(public_key))
+    
+    @staticmethod
+    def decapsulate(ciphertext: bytes, secret_key: bytes) -> bytes:
+        """Decapsulate a shared secret using ciphertext and secret key (no keypair needed)."""
+        from . import _pykyber
+        return _validate_decapsulate(_pykyber._decapsulate_1024, Kyber1024.CIPHERTEXT_SIZE, "Kyber1024.decapsulate")(ciphertext, secret_key)

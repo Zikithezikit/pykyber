@@ -47,6 +47,14 @@ result = keypair.encapsulate()
 
 # Decapsulate - recover shared secret from ciphertext
 shared_secret = keypair.decapsulate(result.ciphertext)
+
+# Static methods - use without creating a keypair instance
+
+# Encapsulate with just a public key
+result = pykyber.Kyber768.encapsulate(public_key)
+
+# Decapsulate with just ciphertext and secret key
+shared_secret = pykyber.Kyber768.decapsulate(ciphertext, secret_key)
 ```
 
 ## Key Sizes
