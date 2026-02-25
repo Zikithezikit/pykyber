@@ -25,12 +25,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Security :: Cryptography",
 ]
-project_urls = {
-    Homepage = "https://github.com/Zikithezikit/pykyber",
-    Documentation = "https://github.com/Zikithezikit/pykyber#readme",
-    Repository = "https://github.com/Zikithezikit/pykyber",
-    Issues = "https://github.com/Zikithezikit/pykyber/issues",
-}
+[project.urls]
+Homepage = "https://github.com/Zikithezikit/pykyber"
+Documentation = "https://github.com/Zikithezikit/pykyber#readme"
+Repository = "https://github.com/Zikithezikit/pykyber"
+Issues = "https://github.com/Zikithezikit/pykyber/issues"
 
 [tool.maturin]
 python-source = "python"
