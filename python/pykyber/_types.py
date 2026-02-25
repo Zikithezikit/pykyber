@@ -18,6 +18,10 @@ class EncapsulationResult:
             f"shared_secret={len(self.shared_secret)} bytes)"
         )
 
+    def __iter__(self):
+        yield self.ciphertext
+        yield self.shared_secret
+
 
 @dataclass
 class Keypair:
@@ -47,3 +51,7 @@ class Keypair:
     
     def __repr__(self) -> str:
         return f"Keypair(secret_key={len(self._secret_key)} bytes, public_key={len(self._public_key)} bytes)"
+
+    def __iter__(self):
+        yield self._public_key
+        yield self._secret_key

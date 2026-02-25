@@ -40,10 +40,16 @@ keypair = pykyber.Kyber1024() # ~AES-256 security
 public_key = keypair.public_key    # bytes
 secret_key = keypair.secret_key    # bytes
 
+# Or unpack directly as tuple
+public_key, secret_key = keypair   # same as above
+
 # Encapsulate - create ciphertext and shared secret
 result = keypair.encapsulate()
 # result.ciphertext     - bytes to send to receiver
 # result.shared_secret  - 32 bytes shared secret
+
+# Or unpack directly as tuple
+ciphertext, shared_secret = keypair.encapsulate()   # same as above
 
 # Decapsulate - recover shared secret from ciphertext
 shared_secret = keypair.decapsulate(result.ciphertext)

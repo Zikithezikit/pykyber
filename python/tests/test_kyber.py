@@ -1506,3 +1506,67 @@ def test_performance_static_methods_kyber768():
     
     print(f"\nKyber768 full key exchange (static methods): {elapsed/iterations*1000:.3f} ms/op ({iterations} iterations)")
     assert elapsed < 5.0
+
+
+def test_keypair_iter():
+    """Test Keypair can be unpacked as tuple (public_key, secret_key)."""
+    keypair = pykyber.Kyber768()
+    pk, sk = keypair
+    
+    assert isinstance(pk, bytes)
+    assert isinstance(sk, bytes)
+    assert len(pk) == 1184
+    assert len(sk) == 2400
+    assert pk == keypair.public_key
+    assert sk == keypair.secret_key
+
+
+def test_encapsulation_result_iter():
+    """Test EncapsulationResult can be unpacked as tuple (ciphertext, shared_secret)."""
+    keypair = pykyber.Kyber768()
+    result = keypair.encapsulate()
+    ct, ss = result
+    
+    assert isinstance(ct, bytes)
+    assert isinstance(ss, bytes)
+    assert len(ct) == 1088
+    assert len(ss) == 32
+    assert ct == result.ciphertext
+    assert ss == result.shared_secret
+
+
+def test_keypair_iter_all_variants():
+    """Test Keypair __iter__ for all Kyber variants."""
+    for cls, expected_pk_len, expected_sk_len in [
+        (pykyber.Kyber512, 800, 1632),
+        (pykyber.Kyber768, 1184, 2400),
+        (pykyber.Kyber1024, 1568, 3168),
+    ]:
+        keypair = cls()
+        pk, sk = keypair
+        assert len(pk) == expected_pk_len
+        assert len(sk) == expected_sk_len
+
+
+def test_encapsulation_result_iter_all_variants():
+    """Test EncapsulationResult __iter__ for all Kyber variants."""
+    for cls, expected_ct_len in [
+        (pykyber.Kyber512, 768),
+        (pykyber.Kyber768, 1088),
+        (pykyber.Kyber1024, 1408),
+    ]:
+        keypair = cls()
+        result = keypair.encapsulate()
+        ct, ss = result
+        assert len(ct) == expected_ct_len
+        assert len(ss) == 32
+
+
+def test_keypair_as_tuple_in_function():
+    """Test Keypair can be passed directly to functions expecting tuple."""
+    pk, sk = pykyber.Kyber768()
+    
+    ciphertext, shared_secret = pykyber.Kyber768.encapsulate(pk)
+    decrypted = pykyber.Kyber768.decapsulate(ciphertext, sk)
+    
+    assert shared_secret == decrypted
