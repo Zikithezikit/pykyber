@@ -6,6 +6,7 @@ use super::symmetric::{
     hash_sha3_512, xof_absorb_bytes, xof_squeeze_blocks, XofState, XOF_BLOCKBYTES,
 };
 use rand_core::{CryptoRng, RngCore};
+use zeroize::Zeroize;
 
 fn pack_pk(r: &mut [u8], pk: &mut Polyvec, seed: &[u8]) {
     const END: usize = KYBER_SYMBYTES + KYBER_POLYVECBYTES;
@@ -28,7 +29,7 @@ fn unpack_sk(sk: &mut Polyvec, packedsk: &[u8]) {
 }
 
 fn pack_ciphertext(r: &mut [u8], b: &mut Polyvec, v: Poly) {
-    polyvec_compress(r, *b);
+    polyvec_compress(r, b.clone());
     poly_compress(&mut r[KYBER_POLYVECCOMPRESSEDBYTES..], v);
 }
 
@@ -108,7 +109,7 @@ pub fn indcpa_keypair<R>(
 where
     R: CryptoRng + RngCore,
 {
-    let mut a = [Polyvec::new(); KYBER_K];
+    let mut a: [Polyvec; KYBER_K] = core::array::from_fn(|_| Polyvec::new());
     let (mut e, mut pkpv, mut skpv) = (Polyvec::new(), Polyvec::new(), Polyvec::new());
     let mut nonce = 0u8;
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
@@ -146,11 +147,15 @@ where
 
     pack_sk(sk, &mut skpv);
     pack_pk(pk, &mut pkpv, publicseed);
+
+    a.zeroize();
+    buf.zeroize();
+    randbuf.zeroize();
     Ok(())
 }
 
 pub fn indcpa_enc(c: &mut [u8], m: &[u8], pk: &[u8], coins: &[u8]) {
-    let mut at = [Polyvec::new(); KYBER_K];
+    let mut at: [Polyvec; KYBER_K] = core::array::from_fn(|_| Polyvec::new());
     let (mut sp, mut pkpv, mut ep, mut b) = (
         Polyvec::new(),
         Polyvec::new(),
@@ -191,7 +196,8 @@ pub fn indcpa_enc(c: &mut [u8], m: &[u8], pk: &[u8], coins: &[u8]) {
     polyvec_reduce(&mut b);
     poly_reduce(&mut v);
 
-    pack_ciphertext(c, &mut b, v);
+    pack_ciphertext(c, &mut b, v.clone());
+    seed.zeroize();
 }
 
 pub fn indcpa_dec(m: &mut [u8], c: &[u8], sk: &[u8]) {
@@ -224,7 +230,7 @@ fn unpack_pk_512(pk: &mut Polyvec512, seed: &mut [u8], packedpk: &[u8]) {
 }
 
 fn pack_ciphertext_512(r: &mut [u8], b: &mut Polyvec512, v: Poly) {
-    polyvec_compress_512(r, *b);
+    polyvec_compress_512(r, b.clone());
     poly_compress(&mut r[KYBER_512_POLYVECCOMPRESSEDBYTES..], v);
 }
 
@@ -285,7 +291,7 @@ where
     R: CryptoRng + RngCore,
 {
     const K: usize = KYBER_512_K;
-    let mut a = [Polyvec512::new(); K];
+    let mut a: [Polyvec512; K] = core::array::from_fn(|_| Polyvec512::new());
     let (mut e, mut pkpv, mut skpv) = (Polyvec512::new(), Polyvec512::new(), Polyvec512::new());
     let mut nonce = 0u8;
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
@@ -303,11 +309,11 @@ where
     gen_a_512(&mut a, publicseed);
 
     for i in 0..K {
-        poly_getnoise_eta1(&mut skpv.vec[i], noiseseed, nonce);
+        poly_getnoise_eta1_512(&mut skpv.vec[i], noiseseed, nonce);
         nonce += 1;
     }
     for i in 0..K {
-        poly_getnoise_eta1(&mut e.vec[i], noiseseed, nonce);
+        poly_getnoise_eta1_512(&mut e.vec[i], noiseseed, nonce);
         nonce += 1;
     }
 
@@ -323,12 +329,16 @@ where
 
     polyvec_tobytes_512(sk, &skpv);
     pack_pk_512(pk, &mut pkpv, publicseed);
+
+    a.zeroize();
+    buf.zeroize();
+    randbuf.zeroize();
     Ok(())
 }
 
 pub fn indcpa_enc_512(c: &mut [u8], m: &[u8], pk: &[u8], coins: &[u8]) {
     const K: usize = KYBER_512_K;
-    let mut at = [Polyvec512::new(); K];
+    let mut at: [Polyvec512; K] = core::array::from_fn(|_| Polyvec512::new());
     let (mut sp, mut pkpv, mut ep, mut b) = (
         Polyvec512::new(),
         Polyvec512::new(),
@@ -344,14 +354,14 @@ pub fn indcpa_enc_512(c: &mut [u8], m: &[u8], pk: &[u8], coins: &[u8]) {
     gen_at_512(&mut at, &seed);
 
     for i in 0..K {
-        poly_getnoise_eta1(&mut sp.vec[i], coins, nonce);
+        poly_getnoise_eta1_512(&mut sp.vec[i], coins, nonce);
         nonce += 1;
     }
     for i in 0..K {
-        poly_getnoise_eta2(&mut ep.vec[i], coins, nonce);
+        poly_getnoise_eta2_512(&mut ep.vec[i], coins, nonce);
         nonce += 1;
     }
-    poly_getnoise_eta2(&mut epp, coins, nonce);
+    poly_getnoise_eta2_512(&mut epp, coins, nonce);
 
     polyvec_ntt_512(&mut sp);
 
@@ -369,7 +379,9 @@ pub fn indcpa_enc_512(c: &mut [u8], m: &[u8], pk: &[u8], coins: &[u8]) {
     polyvec_reduce_512(&mut b);
     poly_reduce(&mut v);
 
-    pack_ciphertext_512(c, &mut b, v);
+    pack_ciphertext_512(c, &mut b, v.clone());
+    at.zeroize();
+    seed.zeroize();
 }
 
 pub fn indcpa_dec_512(m: &mut [u8], c: &[u8], sk: &[u8]) {
@@ -402,13 +414,13 @@ fn unpack_pk_1024(pk: &mut Polyvec1024, seed: &mut [u8], packedpk: &[u8]) {
 }
 
 fn pack_ciphertext_1024(r: &mut [u8], b: &mut Polyvec1024, v: Poly) {
-    polyvec_compress_1024(r, *b);
-    poly_compress(&mut r[KYBER_1024_POLYVECCOMPRESSEDBYTES..], v);
+    polyvec_compress_1024(r, b.clone());
+    poly_compress_1024(&mut r[KYBER_1024_POLYVECCOMPRESSEDBYTES..], v);
 }
 
 fn unpack_ciphertext_1024(b: &mut Polyvec1024, v: &mut Poly, c: &[u8]) {
     polyvec_decompress_1024(b, c);
-    poly_decompress(v, &c[KYBER_1024_POLYVECCOMPRESSEDBYTES..]);
+    poly_decompress_1024(v, &c[KYBER_1024_POLYVECCOMPRESSEDBYTES..]);
 }
 
 fn gen_matrix_1024(a: &mut [Polyvec1024], seed: &[u8], transposed: bool) {
@@ -463,7 +475,7 @@ where
     R: CryptoRng + RngCore,
 {
     const K: usize = KYBER_1024_K;
-    let mut a = [Polyvec1024::new(); K];
+    let mut a: [Polyvec1024; K] = core::array::from_fn(|_| Polyvec1024::new());
     let (mut e, mut pkpv, mut skpv) = (Polyvec1024::new(), Polyvec1024::new(), Polyvec1024::new());
     let mut nonce = 0u8;
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
@@ -501,12 +513,16 @@ where
 
     polyvec_tobytes_1024(sk, &skpv);
     pack_pk_1024(pk, &mut pkpv, publicseed);
+
+    a.zeroize();
+    buf.zeroize();
+    randbuf.zeroize();
     Ok(())
 }
 
 pub fn indcpa_enc_1024(c: &mut [u8], m: &[u8], pk: &[u8], coins: &[u8]) {
     const K: usize = KYBER_1024_K;
-    let mut at = [Polyvec1024::new(); K];
+    let mut at: [Polyvec1024; K] = core::array::from_fn(|_| Polyvec1024::new());
     let (mut sp, mut pkpv, mut ep, mut b) = (
         Polyvec1024::new(),
         Polyvec1024::new(),
@@ -547,7 +563,9 @@ pub fn indcpa_enc_1024(c: &mut [u8], m: &[u8], pk: &[u8], coins: &[u8]) {
     polyvec_reduce_1024(&mut b);
     poly_reduce(&mut v);
 
-    pack_ciphertext_1024(c, &mut b, v);
+    pack_ciphertext_1024(c, &mut b, v.clone());
+    at.zeroize();
+    seed.zeroize();
 }
 
 pub fn indcpa_dec_1024(m: &mut [u8], c: &[u8], sk: &[u8]) {

@@ -6,7 +6,10 @@ const SHA3_256_RATE: usize = 136;
 const SHA3_512_RATE: usize = 72;
 const NROUNDS: usize = 24;
 
-#[derive(Copy, Clone)]
+use zeroize::Zeroize;
+
+#[derive(Clone, Zeroize)]
+#[zeroize(drop)]
 pub struct KeccakState {
     pub s: [u64; 25],
     pub pos: usize,
