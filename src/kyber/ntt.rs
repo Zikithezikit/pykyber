@@ -36,8 +36,8 @@ pub fn ntt_forward(coeffs: &mut [i16]) {
             j = start;
             while j < (start + layer_length) {
                 temp = field_multiply(zeta, coeffs[j + layer_length]);
-                coeffs[j + layer_length] = coeffs[j] - temp;
-                coeffs[j] += temp;
+                coeffs[j + layer_length] = (coeffs[j] as i32 - temp as i32) as i16;
+                coeffs[j] = (coeffs[j] as i32 + temp as i32) as i16;
                 j += 1;
             }
             start = j + layer_length;
@@ -48,7 +48,7 @@ pub fn ntt_forward(coeffs: &mut [i16]) {
 
 /// Inverse Number Theuristic Transform (INTT) on a polynomial.
 /// Transforms coefficients from NTT domain back to standard representation.
-/// Uses inverse butterflies withBarrett reduction and final scaling factor.
+/// Uses inverse butterflies with Barrett reduction and final scaling factor.
 pub fn ntt_inverse(coeffs: &mut [i16]) {
     let mut j;
     let mut zeta_index = 127usize;
@@ -63,8 +63,8 @@ pub fn ntt_inverse(coeffs: &mut [i16]) {
             j = start;
             while j < (start + layer_length) {
                 temp = coeffs[j];
-                coeffs[j] = barrett_reduce(temp + coeffs[j + layer_length]);
-                coeffs[j + layer_length] = coeffs[j + layer_length] - temp;
+                coeffs[j] = barrett_reduce(temp as i32 + coeffs[j + layer_length] as i32);
+                coeffs[j + layer_length] = (coeffs[j + layer_length] as i32 - temp as i32) as i16;
                 coeffs[j + layer_length] = field_multiply(zeta, coeffs[j + layer_length]);
                 j += 1
             }

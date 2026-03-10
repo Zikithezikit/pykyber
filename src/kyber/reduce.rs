@@ -11,10 +11,10 @@ pub fn montgomery_reduce(a: i32) -> i16 {
     t as i16
 }
 
-pub fn barrett_reduce(a: i16) -> i16 {
+pub fn barrett_reduce(a: i32) -> i16 {
     let v = ((1u32 << 26) / KYBER_Q as u32 + 1) as i32;
-    let mut t = v * a as i32 + (1 << 25);
+    let mut t = v * a + (1 << 25);
     t >>= 26;
     t *= KYBER_Q as i32;
-    a - t as i16
+    (a - t) as i16
 }
