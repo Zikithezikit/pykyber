@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use zeroize::Zeroize;
+
 pub use super::fips202::{
     sha3_256, sha3_512, shake128_absorb_once, shake256, KeccakState, SHAKE128_RATE,
 };
@@ -55,6 +57,7 @@ fn kyber_shake128_absorb(state: &mut KeccakState, input: &[u8], x_coord: u8, y_c
     extseed[32] = x_coord;
     extseed[33] = y_coord;
     shake128_absorb_once(state, &extseed, 34);
+    extseed.zeroize();
 }
 
 /// Internal: Squeezes output blocks from SHAKE128 XOF state.
@@ -69,4 +72,5 @@ fn shake256_prf(output: &mut [u8], outlen: usize, key: &[u8], nonce: u8) {
     extkey[..32].copy_from_slice(key);
     extkey[32] = nonce;
     shake256(output, outlen, &extkey, 33);
+    extkey.zeroize();
 }

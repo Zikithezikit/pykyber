@@ -36,6 +36,10 @@ keypair = pykyber.Kyber512()   # ~AES-128 security
 keypair = pykyber.Kyber768()   # ~AES-192 security
 keypair = pykyber.Kyber1024() # ~AES-256 security
 
+# Deterministic key generation from a 64-byte seed
+seed = bytes(range(64))
+keypair = pykyber.Kyber768(seed=seed)
+
 # Access raw key bytes
 public_key = keypair.public_key    # bytes
 secret_key = keypair.secret_key    # bytes
@@ -47,6 +51,15 @@ public_key, secret_key = keypair   # same as above
 result = keypair.encapsulate()
 # result.ciphertext     - bytes to send to receiver
 # result.shared_secret  - 32 bytes shared secret
+
+# Serialization and Utilities
+hex_pk = keypair.public_key_hex    # Get hex representation
+b64_sk = keypair.secret_key_b64    # Get base64 representation
+data = keypair.to_dict()           # Get dictionary of hex keys
+
+# Encapsulation results also support serialization
+ct_hex = result.ciphertext_hex
+ss_b64 = result.shared_secret_b64
 
 # Or unpack directly as tuple
 ciphertext, shared_secret = keypair.encapsulate()   # same as above
@@ -61,6 +74,9 @@ result = pykyber.Kyber768.encapsulate(public_key)
 
 # Decapsulate with just ciphertext and secret key
 shared_secret = pykyber.Kyber768.decapsulate(ciphertext, secret_key)
+
+# Load a Keypair object from existing keys
+keypair = pykyber.Kyber768.from_keys(public_key, secret_key)
 ```
 
 ## Key Sizes
@@ -69,7 +85,7 @@ shared_secret = pykyber.Kyber768.decapsulate(ciphertext, secret_key)
 |-----------|------------|------------|------------|---------------|
 | Kyber-512 | 800 bytes  | 1632 bytes | 768 bytes  | 32 bytes      |
 | Kyber-768 | 1184 bytes | 2400 bytes | 1088 bytes | 32 bytes      |
-| Kyber-1024| 1568 bytes | 3168 bytes | 1408 bytes | 32 bytes      |
+| Kyber-1024| 1568 bytes | 3168 bytes | 1568 bytes | 32 bytes      |
 
 
 ## Error Handling
@@ -91,6 +107,7 @@ Common error cases:
 - **Invalid public key size**: Wrong number of bytes for the Kyber variant
 - **Invalid ciphertext size**: Wrong number of bytes when decapsulating
 - **Invalid secret key size**: Wrong number of bytes for the Kyber variant
+- **Invalid seed size**: Seed must be exactly 64 bytes for deterministic generation
 
 
 ## Performance
@@ -99,9 +116,9 @@ Performance benchmarks (100 iterations each):
 
 | Variant | Keypair | Encapsulate | Decapsulate |
 |---------|---------|-------------|-------------|
-| Kyber512 | 0.27 ms (3,667/s) | 0.39 ms (2,548/s) | 0.48 ms (2,101/s) |
-| Kyber768 | 0.48 ms (2,069/s) | 0.62 ms (1,605/s) | 0.78 ms (1,279/s) |
-| Kyber1024 | 0.78 ms (1,289/s) | 0.94 ms (1,064/s) | 1.04 ms (959/s) |
+| Kyber512 | 0.44 ms (2,262/s) | 0.58 ms (1,721/s) | 0.71 ms (1,404/s) |
+| Kyber768 | 0.76 ms (1,312/s) | 0.90 ms (1,111/s) | 1.08 ms (930/s) |
+| Kyber1024 | 1.08 ms (928/s) | 1.35 ms (743/s) | 1.55 ms (645/s) |
 
 Run benchmarks and generate graphs:
 

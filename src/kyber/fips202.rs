@@ -6,7 +6,10 @@ const SHA3_256_RATE: usize = 136;
 const SHA3_512_RATE: usize = 72;
 const NROUNDS: usize = 24;
 
-#[derive(Copy, Clone)]
+use zeroize::Zeroize;
+
+#[derive(Clone, Zeroize)]
+#[zeroize(drop)]
 pub struct KeccakState {
     pub s: [u64; 25],
     pub pos: usize,
@@ -402,14 +405,19 @@ fn keccak_squeeze(
             pos = 0
         }
         let mut i = pos;
-        let mut w = i / 8;
-        while i < r && i < pos + outlen {
-            store_u64(&mut out[idx..], s[w]);
-            i += 8;
-            w += 1;
-            idx += 8;
+        while i < r && outlen > 0 {
+            if outlen >= 8 && i % 8 == 0 && i + 8 <= r {
+                store_u64(&mut out[idx..], s[i / 8]);
+                idx += 8;
+                outlen -= 8;
+                i += 8;
+            } else {
+                out[idx] = (s[i / 8] >> (8 * (i % 8))) as u8;
+                idx += 1;
+                outlen -= 1;
+                i += 1;
+            }
         }
-        outlen -= i - pos;
         pos = i;
     }
     pos
