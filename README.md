@@ -36,6 +36,10 @@ keypair = pykyber.Kyber512()   # ~AES-128 security
 keypair = pykyber.Kyber768()   # ~AES-192 security
 keypair = pykyber.Kyber1024() # ~AES-256 security
 
+# Deterministic key generation from a 64-byte seed
+seed = bytes(range(64))
+keypair = pykyber.Kyber768(seed=seed)
+
 # Access raw key bytes
 public_key = keypair.public_key    # bytes
 secret_key = keypair.secret_key    # bytes
@@ -47,6 +51,15 @@ public_key, secret_key = keypair   # same as above
 result = keypair.encapsulate()
 # result.ciphertext     - bytes to send to receiver
 # result.shared_secret  - 32 bytes shared secret
+
+# Serialization and Utilities
+hex_pk = keypair.public_key_hex    # Get hex representation
+b64_sk = keypair.secret_key_b64    # Get base64 representation
+data = keypair.to_dict()           # Get dictionary of hex keys
+
+# Encapsulation results also support serialization
+ct_hex = result.ciphertext_hex
+ss_b64 = result.shared_secret_b64
 
 # Or unpack directly as tuple
 ciphertext, shared_secret = keypair.encapsulate()   # same as above
@@ -61,6 +74,9 @@ result = pykyber.Kyber768.encapsulate(public_key)
 
 # Decapsulate with just ciphertext and secret key
 shared_secret = pykyber.Kyber768.decapsulate(ciphertext, secret_key)
+
+# Load a Keypair object from existing keys
+keypair = pykyber.Kyber768.from_keys(public_key, secret_key)
 ```
 
 ## Key Sizes
