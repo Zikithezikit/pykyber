@@ -15,10 +15,55 @@ fn make_kyber_error(msg: &str) -> PyErr {
 }
 
 #[pyfunction]
-fn generate_keypair() -> PyResult<(Vec<u8>, Vec<u8>)> {
+fn generate_keypair(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    if let Some(s) = seed {
+        if s.len() != 64 {
+            return Err(make_kyber_error("Seed must be 64 bytes"));
+        }
+        kyber::derive(s)
+            .map(|keys| (keys.public.to_vec(), keys.secret.to_vec()))
+            .map_err(|e| make_kyber_error(&e.to_string()))
+    } else {
+        let mut rng = thread_rng();
+        keypair(&mut rng)
+            .map(|keys| (keys.public.to_vec(), keys.secret.to_vec()))
+            .map_err(|e| make_kyber_error(&e.to_string()))
+    }
+}
+
+#[pyfunction]
+fn generate_keypair_512(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
     let mut rng = thread_rng();
-    keypair(&mut rng)
-        .map(|keys| (keys.public.to_vec(), keys.secret.to_vec()))
+    let mut pk = vec![0u8; KYBER_512_PUBLICKEYBYTES];
+    let mut sk = vec![0u8; KYBER_512_SECRETKEYBYTES];
+    let s_opt = if let Some(s) = seed {
+        if s.len() != 64 {
+            return Err(make_kyber_error("Seed must be 64 bytes"));
+        }
+        Some((&s[..32], &s[32..]))
+    } else {
+        None
+    };
+    crypto_kem_keypair_512(&mut pk, &mut sk, &mut rng, s_opt)
+        .map(|_| (pk, sk))
+        .map_err(|e| make_kyber_error(&e.to_string()))
+}
+
+#[pyfunction]
+fn generate_keypair_1024(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
+    let mut rng = thread_rng();
+    let mut pk = vec![0u8; KYBER_1024_PUBLICKEYBYTES];
+    let mut sk = vec![0u8; KYBER_1024_SECRETKEYBYTES];
+    let s_opt = if let Some(s) = seed {
+        if s.len() != 64 {
+            return Err(make_kyber_error("Seed must be 64 bytes"));
+        }
+        Some((&s[..32], &s[32..]))
+    } else {
+        None
+    };
+    crypto_kem_keypair_1024(&mut pk, &mut sk, &mut rng, s_opt)
+        .map(|_| (pk, sk))
         .map_err(|e| make_kyber_error(&e.to_string()))
 }
 
@@ -34,26 +79,6 @@ fn encapsulate_key(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
 fn decapsulate_key(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
     decapsulate(ct, sk)
         .map(|ss| ss.to_vec())
-        .map_err(|e| make_kyber_error(&e.to_string()))
-}
-
-#[pyfunction]
-fn generate_keypair_512() -> PyResult<(Vec<u8>, Vec<u8>)> {
-    let mut rng = thread_rng();
-    let mut pk = vec![0u8; KYBER_512_PUBLICKEYBYTES];
-    let mut sk = vec![0u8; KYBER_512_SECRETKEYBYTES];
-    crypto_kem_keypair_512(&mut pk, &mut sk, &mut rng, None)
-        .map(|_| (pk, sk))
-        .map_err(|e| make_kyber_error(&e.to_string()))
-}
-
-#[pyfunction]
-fn generate_keypair_1024() -> PyResult<(Vec<u8>, Vec<u8>)> {
-    let mut rng = thread_rng();
-    let mut pk = vec![0u8; KYBER_1024_PUBLICKEYBYTES];
-    let mut sk = vec![0u8; KYBER_1024_SECRETKEYBYTES];
-    crypto_kem_keypair_1024(&mut pk, &mut sk, &mut rng, None)
-        .map(|_| (pk, sk))
         .map_err(|e| make_kyber_error(&e.to_string()))
 }
 
@@ -128,8 +153,8 @@ mod _pykyber {
     use pyo3::prelude::*;
 
     #[pyfunction]
-    pub fn _generate_keypair() -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::generate_keypair()
+    pub fn _generate_keypair(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
+        super::generate_keypair(seed)
     }
 
     #[pyfunction]
@@ -143,18 +168,18 @@ mod _pykyber {
     }
 
     #[pyfunction]
-    pub fn _keypair_512() -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::generate_keypair_512()
+    pub fn _keypair_512(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
+        super::generate_keypair_512(seed)
     }
 
     #[pyfunction]
-    pub fn _keypair_768() -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::generate_keypair()
+    pub fn _keypair_768(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
+        super::generate_keypair(seed)
     }
 
     #[pyfunction]
-    pub fn _keypair_1024() -> PyResult<(Vec<u8>, Vec<u8>)> {
-        super::generate_keypair_1024()
+    pub fn _keypair_1024(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
+        super::generate_keypair_1024(seed)
     }
 
     #[pyfunction]

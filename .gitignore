@@ -5,3 +5,6 @@ __pycache__/
 *.so
 *.pyi
 .pytest_cache/
+
+# Opencode
+.opencode/
