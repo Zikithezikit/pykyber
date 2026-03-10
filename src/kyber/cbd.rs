@@ -49,6 +49,10 @@ pub fn poly_cbd_eta1(r: &mut Poly, buf: &[u8]) {
     cbd2(r, buf)
 }
 
+pub fn poly_cbd_eta1_512(r: &mut Poly, buf: &[u8]) {
+    cbd3(r, buf)
+}
+
 pub fn poly_cbd_eta2(r: &mut Poly, buf: &[u8]) {
     cbd2(r, buf)
 }

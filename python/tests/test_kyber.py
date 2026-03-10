@@ -41,7 +41,7 @@ def test_kyber1024_new_api():
     
     assert len(keypair.public_key) == 1568
     assert len(keypair.secret_key) == 3168
-    assert len(result.ciphertext) == 1408
+    assert len(result.ciphertext) == 1568
     assert len(result.shared_secret) == 32
     assert result.shared_secret == shared_secret2
 
@@ -451,7 +451,7 @@ def test_encapsulate_static_method_kyber1024():
     result = pykyber.Kyber1024.encapsulate(pk)
     
     assert isinstance(result, pykyber._kyber.EncapsulationResult)
-    assert len(result.ciphertext) == 1408
+    assert len(result.ciphertext) == 1568
     assert len(result.shared_secret) == 32
     
     ss = keypair.decapsulate(result.ciphertext)
@@ -562,7 +562,7 @@ def test_kyber1024_invalid_ciphertext_length():
 
 def test_kyber1024_invalid_secret_key_length():
     """Test Kyber1024 with invalid secret key length."""
-    ct = bytes(1408)
+    ct = bytes(1568)
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber._decapsulate_1024(ct, b"short")
     assert "Invalid input for 'sk'" in str(exc_info.value)
@@ -867,7 +867,7 @@ def test_all_zero_public_key_1024():
     """Test encapsulation with all-zero public key (Kyber1024)."""
     zero_pk = bytes(1568)
     ct, ss = pykyber._encapsulate_1024(zero_pk)
-    assert len(ct) == 1408
+    assert len(ct) == 1568
     assert len(ss) == 32
 
 
@@ -891,7 +891,7 @@ def test_all_ones_public_key_1024():
     """Test encapsulation with all-ones public key (Kyber1024)."""
     ones_pk = bytes([255] * 1568)
     ct, ss = pykyber._encapsulate_1024(ones_pk)
-    assert len(ct) == 1408
+    assert len(ct) == 1568
     assert len(ss) == 32
 
 
@@ -922,7 +922,7 @@ def test_decapsulate_with_all_zero_ciphertext_768():
 def test_decapsulate_with_all_zero_ciphertext_1024():
     """Test decapsulation with all-zero ciphertext (Kyber1024)."""
     pk, sk = pykyber._keypair_1024()
-    zero_ct = bytes(1408)
+    zero_ct = bytes(1568)
     ss = pykyber._decapsulate_1024(zero_ct, sk)
     assert len(ss) == 32
 
@@ -1231,7 +1231,7 @@ def test_static_decapsulate_invalid_ciphertext_length_kyber1024():
 
 def test_static_decapsulate_invalid_secret_key_length_kyber1024():
     """Test static decapsulate with invalid secret key length (Kyber1024)."""
-    ct = bytes(1408)
+    ct = bytes(1568)
     with pytest.raises(pykyber.KyberError) as exc_info:
         pykyber.Kyber1024.decapsulate(ct, b"short")
     assert "Invalid input for 'sk'" in str(exc_info.value)
@@ -1553,7 +1553,7 @@ def test_encapsulation_result_iter_all_variants():
     for cls, expected_ct_len in [
         (pykyber.Kyber512, 768),
         (pykyber.Kyber768, 1088),
-        (pykyber.Kyber1024, 1408),
+        (pykyber.Kyber1024, 1568),
     ]:
         keypair = cls()
         result = keypair.encapsulate()

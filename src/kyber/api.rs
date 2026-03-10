@@ -50,7 +50,10 @@ pub fn decapsulate(ct: &[u8], sk: &[u8]) -> Decapsulated {
     Ok(ss)
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+use zeroize::Zeroize;
+
+#[derive(Clone, Debug, Eq, PartialEq, Zeroize)]
+#[zeroize(drop)]
 pub struct Keypair {
     pub public: PublicKey,
     pub secret: SecretKey,
