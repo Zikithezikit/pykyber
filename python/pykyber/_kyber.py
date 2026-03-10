@@ -87,7 +87,7 @@ class Kyber1024:
     
     PUBLIC_KEY_SIZE = 1568
     SECRET_KEY_SIZE = 3168
-    CIPHERTEXT_SIZE = 1408
+    CIPHERTEXT_SIZE = 1568
     SHARED_SECRET_SIZE = 32
     
     def __new__(cls, seed: Optional[bytes] = None) -> Keypair:

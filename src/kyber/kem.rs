@@ -7,6 +7,7 @@ use super::params::*;
 use super::symmetric::{hash_sha3_256, hash_sha3_512, shake256_kdf};
 use super::verify::{cmov, verify};
 use rand_core::{CryptoRng, RngCore};
+use zeroize::Zeroize;
 
 pub fn crypto_kem_keypair<R>(
     pk: &mut [u8],
@@ -62,6 +63,10 @@ where
 
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+
+    kr.zeroize();
+    buf.zeroize();
+    randbuf.zeroize();
     Ok(())
 }
 
@@ -103,6 +108,11 @@ pub fn crypto_kem_dec(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), KyberEr
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
     cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+
+    buf.zeroize();
+    kr.zeroize();
+    cmp.zeroize();
+    pk.zeroize();
     Ok(())
 }
 
@@ -161,6 +171,10 @@ where
 
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_512_CIPHERTEXTBYTES);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+
+    kr.zeroize();
+    buf.zeroize();
+    randbuf.zeroize();
     Ok(())
 }
 
@@ -202,6 +216,11 @@ pub fn crypto_kem_dec_512(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), Kyb
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_512_CIPHERTEXTBYTES);
     cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+
+    buf.zeroize();
+    kr.zeroize();
+    cmp.zeroize();
+    pk.zeroize();
     Ok(())
 }
 
@@ -260,6 +279,10 @@ where
 
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_1024_CIPHERTEXTBYTES);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+
+    kr.zeroize();
+    buf.zeroize();
+    randbuf.zeroize();
     Ok(())
 }
 
@@ -301,5 +324,10 @@ pub fn crypto_kem_dec_1024(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), Ky
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_1024_CIPHERTEXTBYTES);
     cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
     shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+
+    buf.zeroize();
+    kr.zeroize();
+    cmp.zeroize();
+    pk.zeroize();
     Ok(())
 }
