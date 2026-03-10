@@ -405,14 +405,19 @@ fn keccak_squeeze(
             pos = 0
         }
         let mut i = pos;
-        let mut w = i / 8;
-        while i < r && i < pos + outlen {
-            store_u64(&mut out[idx..], s[w]);
-            i += 8;
-            w += 1;
-            idx += 8;
+        while i < r && outlen > 0 {
+            if outlen >= 8 && i % 8 == 0 && i + 8 <= r {
+                store_u64(&mut out[idx..], s[i / 8]);
+                idx += 8;
+                outlen -= 8;
+                i += 8;
+            } else {
+                out[idx] = (s[i / 8] >> (8 * (i % 8))) as u8;
+                idx += 1;
+                outlen -= 1;
+                i += 1;
+            }
         }
-        outlen -= i - pos;
         pos = i;
     }
     pos

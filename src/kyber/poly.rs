@@ -185,7 +185,7 @@ pub fn poly_tomont(r: &mut Poly) {
 
 pub fn poly_reduce(r: &mut Poly) {
     for i in 0..KYBER_N {
-        r.coeffs[i] = barrett_reduce(r.coeffs[i]);
+        r.coeffs[i] = barrett_reduce(r.coeffs[i] as i32);
     }
 }
 
