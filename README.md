@@ -107,6 +107,7 @@ Common error cases:
 - **Invalid public key size**: Wrong number of bytes for the Kyber variant
 - **Invalid ciphertext size**: Wrong number of bytes when decapsulating
 - **Invalid secret key size**: Wrong number of bytes for the Kyber variant
+- **Invalid seed size**: Seed must be exactly 64 bytes for deterministic generation
 
 
 ## Performance
