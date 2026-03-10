@@ -85,7 +85,7 @@ keypair = pykyber.Kyber768.from_keys(public_key, secret_key)
 |-----------|------------|------------|------------|---------------|
 | Kyber-512 | 800 bytes  | 1632 bytes | 768 bytes  | 32 bytes      |
 | Kyber-768 | 1184 bytes | 2400 bytes | 1088 bytes | 32 bytes      |
-| Kyber-1024| 1568 bytes | 3168 bytes | 1408 bytes | 32 bytes      |
+| Kyber-1024| 1568 bytes | 3168 bytes | 1568 bytes | 32 bytes      |
 
 
 ## Error Handling
@@ -116,9 +116,9 @@ Performance benchmarks (100 iterations each):
 
 | Variant | Keypair | Encapsulate | Decapsulate |
 |---------|---------|-------------|-------------|
-| Kyber512 | 0.27 ms (3,667/s) | 0.39 ms (2,548/s) | 0.48 ms (2,101/s) |
-| Kyber768 | 0.48 ms (2,069/s) | 0.62 ms (1,605/s) | 0.78 ms (1,279/s) |
-| Kyber1024 | 0.78 ms (1,289/s) | 0.94 ms (1,064/s) | 1.04 ms (959/s) |
+| Kyber512 | 0.44 ms (2,262/s) | 0.58 ms (1,721/s) | 0.71 ms (1,404/s) |
+| Kyber768 | 0.76 ms (1,312/s) | 0.90 ms (1,111/s) | 1.08 ms (930/s) |
+| Kyber1024 | 1.08 ms (928/s) | 1.35 ms (743/s) | 1.55 ms (645/s) |
 
 Run benchmarks and generate graphs:
 
