@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pykyber"
-version = "1.0.0"
+version = "1.0.1"
 description = "Kyber post-quantum key encapsulation in Rust"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -21,7 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Rust",
-    "License :: OSI Approved :: Unlicense",
+    "License :: Public Domain",
     "Operating System :: OS Independent",
     "Topic :: Security :: Cryptography",
 ]
