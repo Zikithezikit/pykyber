@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.5
+
+- CI: add Android wheel builds (aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android × Python 3.8–3.14) — proper Termux support via PEP 738 android platform tags
+- CI: remove redundant termux job (built manylinux aarch64/armv7, already covered by linux job; not Termux-compatible)
+
 ## v1.0.3
 
 - CI: add PyPy 3.11 setup step to restore PyPy wheel builds

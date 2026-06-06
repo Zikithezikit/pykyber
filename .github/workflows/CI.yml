@@ -40,9 +40,6 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: actions/setup-python@v6
-        with:
-          python-version: 'pypy-3.11'
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -54,6 +51,31 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: wheels-linux-${{ matrix.platform.target }}
+          path: dist
+
+  linux-pypy:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        target:
+          - x86_64
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 'pypy-3.11'
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --interpreter pypy3.11
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: 2_17
+          container: off
+      - name: Upload wheels
+        uses: actions/upload-artifact@v5
+        with:
+          name: wheels-linux-pypy-${{ matrix.target }}
           path: dist
 
   musllinux:
@@ -74,9 +96,6 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: actions/setup-python@v6
-        with:
-          python-version: 'pypy-3.11'
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -143,28 +162,100 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
-  termux:
-    runs-on: ubuntu-latest
+  android:
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
-          - aarch64-unknown-linux-gnu
-          - armv7-unknown-linux-gnueabihf
+          - aarch64-linux-android
+          - armv7-linux-androideabi
+          - x86_64-linux-android
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
         with:
-          python-version: '3.12'
+          ndk-version: r27d
+          local-cache: true
+      - name: Prepare PYO3_CROSS_LIB_DIR
+        run: |
+          NDK="$ANDROID_NDK_ROOT"
+          TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
+          ANDROID_API=24
+          PYVER="${{ matrix.python-version }}"
+          MOCK_DIR="${{ github.workspace }}/android_python_${{ matrix.target }}_${{ matrix.python-version }}"
+          mkdir -p "$MOCK_DIR"
+
+          case "${{ matrix.target }}" in
+            aarch64-linux-android)   CLANG_TARGET="aarch64-linux-android${ANDROID_API}" ;;
+            armv7-linux-androideabi) CLANG_TARGET="armv7a-linux-androideabi${ANDROID_API}" ;;
+            x86_64-linux-android)    CLANG_TARGET="x86_64-linux-android${ANDROID_API}" ;;
+          esac
+
+          "$TOOLCHAIN/bin/clang" --target="$CLANG_TARGET" -shared \
+            -Wl,-soname,"libpython${PYVER}.so" \
+            -o "$MOCK_DIR/libpython${PYVER}.so" -xc /dev/null
+
+          case "${{ matrix.target }}" in
+            aarch64-linux-android)   LIBDL_ARCH="aarch64-linux-android" ;;
+            armv7-linux-androideabi) LIBDL_ARCH="arm-linux-androideabi" ;;
+            x86_64-linux-android)    LIBDL_ARCH="x86_64-linux-android" ;;
+          esac
+          LIBDL=$(find "$TOOLCHAIN/sysroot/usr/lib/$LIBDL_ARCH" -name libdl.so | head -1)
+          [ -n "$LIBDL" ] && cp "$LIBDL" "$MOCK_DIR/"
+
+          SYSCONFIG_NAME="_sysconfigdata__linux_${{ matrix.target }}"
+          cat > "$MOCK_DIR/${SYSCONFIG_NAME}.py" << EOF
+          build_time_vars = {
+              'abiflags': '',
+              'ABIFLAGS': '',
+              'SO': '.so',
+              'SOABI': 'cpython-${PYVER}',
+              'EXT_SUFFIX': '.so',
+              'LIBDIR': '$MOCK_DIR',
+              'LDLIBRARY': 'libpython${PYVER}.so',
+              'Py_ENABLE_SHARED': 1,
+              'CC': 'clang',
+              'CXX': 'clang++',
+              'VERSION': '${PYVER}',
+              'LDSHARED': 'clang -shared',
+              'LDFLAGS': '-L$MOCK_DIR',
+              'CCSHARED': '-fPIC',
+              'GNULD': 'yes',
+              'Py_DEBUG': 0,
+              'WITH_PYMALLOC': 1,
+          }
+          EOF
+
+          echo "PYO3_CROSS_LIB_DIR=$MOCK_DIR" >> "$GITHUB_ENV"
+          echo "PYO3_CROSS_PYTHON_VERSION=$PYVER" >> "$GITHUB_ENV"
+          echo "_PYTHON_SYSCONFIGDATA_NAME=$SYSCONFIG_NAME" >> "$GITHUB_ENV"
+
+          RFLAGS_VAR="CARGO_TARGET_$(echo "${{ matrix.target }}" | tr '[:lower:]-' '[:upper:]_')_RUSTFLAGS"
+          echo "$RFLAGS_VAR=-C link-arg=-Wl,--no-as-needed -C link-arg=-lpython${PYVER} -C link-arg=-Wl,--unresolved-symbols=ignore-all" >> "$GITHUB_ENV"
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
-          manylinux: auto
+          args: --release --out dist
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: off
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
       - name: Upload wheels
         uses: actions/upload-artifact@v5
         with:
-          name: wheels-termux-${{ matrix.target }}
+          name: wheels-android-${{ matrix.target }}-${{ matrix.python-version }}
           path: dist
 
   sdist:
@@ -186,7 +277,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
-    needs: [linux, musllinux, windows, macos, termux, sdist]
+    needs: [linux, linux-pypy, musllinux, windows, macos, android, sdist]
     permissions:
       # Use to sign the release artifacts
       id-token: write
