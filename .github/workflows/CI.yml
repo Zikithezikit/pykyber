@@ -200,7 +200,7 @@ jobs:
             x86_64-linux-android)    CLANG_TARGET="x86_64-linux-android${ANDROID_API}" ;;
           esac
 
-          "$TOOLCHAIN/bin/clang" --target="$CLANG_TARGET" -shared \
+          "$TOOLCHAIN/bin/${CLANG_TARGET}-clang" -shared \
             -Wl,-soname,"libpython${PYVER}.so" \
             -o "$MOCK_DIR/libpython${PYVER}.so" -xc /dev/null
 
