@@ -219,6 +219,8 @@ jobs:
           "$CLANG" --target="$CLANG_TARGET" -shared \
             -Wl,-soname,"libpython${PYVER}.so" \
             -o "$MOCK_DIR/libpython${PYVER}.so" -xc /dev/null
+          # pyo3 also links -lpython3 (versionless); provide it as a symlink
+          ln -sf "libpython${PYVER}.so" "$MOCK_DIR/libpython3.so"
 
           case "${{ matrix.target }}" in
             aarch64-linux-android)   LIBDL_ARCH="aarch64-linux-android" ;;
