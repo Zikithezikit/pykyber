@@ -255,6 +255,7 @@ jobs:
 
           echo "PYO3_CROSS_LIB_DIR=$MOCK_DIR" >> "$GITHUB_ENV"
           echo "PYO3_CROSS_PYTHON_VERSION=$PYVER" >> "$GITHUB_ENV"
+          echo "ANDROID_API_LEVEL=$ANDROID_API" >> "$GITHUB_ENV"
 
           RFLAGS_VAR="CARGO_TARGET_$(echo "${{ matrix.target }}" | tr '[:lower:]-' '[:upper:]_')_RUSTFLAGS"
           echo "$RFLAGS_VAR=-C link-arg=-Wl,--no-as-needed -C link-arg=-lpython${PYVER} -C link-arg=-Wl,--unresolved-symbols=ignore-all" >> "$GITHUB_ENV"
