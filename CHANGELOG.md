@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1
+
+Fix PyPI classifier for Unlicense (use `License :: Public Domain`).
+
 ## v1.0.0
 
 First stable release. Public domain (Unlicense).
