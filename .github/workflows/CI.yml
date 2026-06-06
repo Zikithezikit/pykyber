@@ -200,18 +200,21 @@ jobs:
             x86_64-linux-android)    CLANG_TARGET="x86_64-linux-android${ANDROID_API}" ;;
           esac
 
-          # NDK r27d removed the generic clang launcher; use versioned clang (e.g. clang-18)
+          # NDK r27d removed generic clang/ld.lld symlinks; restore them so
+          # maturin-action's target-prefixed wrappers (${TARGET}-clang) can work.
           CLANG=$(ls "$TOOLCHAIN/bin/clang-"[0-9]* 2>/dev/null | head -1)
           if [ -z "$CLANG" ]; then
-            # Fallback: generic clang (NDK r26 and earlier)
             CLANG="$TOOLCHAIN/bin/clang"
             if [ ! -f "$CLANG" ]; then
               echo "ERROR: no clang found in $TOOLCHAIN/bin/"
               ls -la "$TOOLCHAIN/bin/" | head -30
               exit 1
             fi
+          else
+            CLANG_BASE=$(basename "$CLANG")
+            ln -sf "$CLANG_BASE" "$TOOLCHAIN/bin/clang"
+            ln -sf "$CLANG_BASE" "$TOOLCHAIN/bin/clang++"
           fi
-          # NDK r27d removed ld.lld symlink; recreate it so clang can find the linker
           ln -sf lld "$TOOLCHAIN/bin/ld.lld"
           "$CLANG" --target="$CLANG_TARGET" -shared \
             -Wl,-soname,"libpython${PYVER}.so" \
