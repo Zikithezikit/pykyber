@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2
+
+- chore: bump version to v1.0.2
+
 ## v1.0.1
 
 Fix PyPI classifier for Unlicense (use `License :: Public Domain`).
