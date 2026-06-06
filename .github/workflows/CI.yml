@@ -211,7 +211,9 @@ jobs:
               exit 1
             fi
           fi
+          # NDK r27d also removed the ld.lld symlink; use --ld-path to point to lld directly
           "$CLANG" --target="$CLANG_TARGET" -shared \
+            --ld-path="$TOOLCHAIN/bin/lld" \
             -Wl,-soname,"libpython${PYVER}.so" \
             -o "$MOCK_DIR/libpython${PYVER}.so" -xc /dev/null
 
