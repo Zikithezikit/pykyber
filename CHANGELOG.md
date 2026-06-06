@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3
+
+- CI: add PyPy 3.11 setup step to restore PyPy wheel builds
+
 ## v1.0.2
 
 - chore: bump version to v1.0.2
