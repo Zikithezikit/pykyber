@@ -4,11 +4,11 @@ build-backend = "maturin"
 
 [project]
 name = "pykyber"
-version = "0.2.0"
+version = "1.0.0"
 description = "Kyber post-quantum key encapsulation in Rust"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = {text = "Unlicense"}
 authors = [
     {name = "Yoav Haimov", email = "haimovyoav@gmail.com"}
 ]
@@ -21,13 +21,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Rust",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Unlicense",
     "Operating System :: OS Independent",
     "Topic :: Security :: Cryptography",
 ]
 [project.urls]
 Homepage = "https://github.com/Zikithezikit/pykyber"
-Documentation = "https://github.com/Zikithezikit/pykyber#readme"
+Documentation = "https://github.com/Zikithezikit/pykyber/tree/v1.0.0/docs"
 Repository = "https://github.com/Zikithezikit/pykyber"
 Issues = "https://github.com/Zikithezikit/pykyber/issues"
 
