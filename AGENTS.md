@@ -51,6 +51,12 @@ These apply to any value derived from a secret key, seed, `m`, `r`, noise, a dec
 - Match the surrounding code style. New ML-KEM code is generic over the parameter set; don't add more `_512/_768/_1024` copies.
 - Add a line under `## Unreleased` in `CHANGELOG.md` for user-visible changes. Version numbers live in **both** `Cargo.toml` and `pyproject.toml`.
 
+### PR descriptions written by agents
+
+- The description goes to the maintainer and reviewers as prose, not as a template shape. Keep the facts (commit list, verification commands and outcomes, sources checked) and state them plainly; read the draft once as a reviewer would and rewrite anything that reads like generated text: bold decoration on every item, dashes chaining every clause, staged close-outs like "bottom line is", fact-free emphasis.
+- Post only character-safe text. Write the body or comment to a file first and byte-check that it is 7-bit ASCII (`grep -nP '[^\x00-\x7F]' <file>` must report no matches) before creating or editing it; non-ASCII text has already reached GitHub as mojibake in this repo. Use ASCII hyphens and straight quotes; tidy the file until the check is clean.
+- Fetch and update PR/issue text through the REST API when the `gh` commands themselves fail on GraphQL errors (here, `gh issue view` and `gh pr edit` die on the "Projects (classic)" deprecation): for example `gh api -X PATCH repos/Zikithezikit/pykyber/pulls/<number> -F body=@<file>`, then read the body back with `gh api ... --jq .body` and run the ASCII check again. What GitHub stores is what reviewers see.
+
 ### Before saying you're done
 
 Run all of these and report the results:
