@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- 2.0 development: repo setup (issue #4), including CI on pushes to `dev-v2`, new `CONTRIBUTING.md`, root `SECURITY.md` (vulnerability-reporting policy + migrated security findings log), PR and issue templates, and `CODEOWNERS` routing `src/` and `SECURITY.md` to the maintainer for review.
+
 ## v1.0.5
 
 - CI: add Android wheel builds (aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android × Python 3.8–3.14) — proper Termux support via PEP 738 android platform tags
