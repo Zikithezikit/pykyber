@@ -24,15 +24,19 @@ fn test_kyber_768_params() {
     assert_eq!(KYBER_768_CIPHERTEXTBYTES, 3 * 320 + 128);
 }
 
+// Kyber1024 compresses with (du, dv) = (11, 5) unlike Kyber512/768 (10, 4):
+// Kyber round-3 spec (2021-08-04), Sec. 1.4, Table 1 (parameters) and Table 2
+// (sizes: sk 3168, pk 1568, ct 1568); same sizes in FIPS 203 final, Sec. 8,
+// Tables 2-3. Ciphertext = k*du*n/8 + dv*n/8 = 4*352 + 160 = 1568 bytes.
 #[test]
 fn test_kyber_1024_params() {
     assert_eq!(KYBER_1024_K, 4);
     assert_eq!(KYBER_1024_POLYVECBYTES, 4 * 384);
-    assert_eq!(KYBER_1024_POLYVECCOMPRESSEDBYTES, 4 * 320);
+    assert_eq!(KYBER_1024_POLYVECCOMPRESSEDBYTES, 4 * 352);
     assert_eq!(KYBER_1024_INDCPA_PUBLICKEYBYTES, 4 * 384 + 32);
     assert_eq!(KYBER_1024_PUBLICKEYBYTES, 1568);
     assert_eq!(KYBER_1024_SECRETKEYBYTES, 4 * 384 + (4 * 384 + 32) + 2 * 32);
-    assert_eq!(KYBER_1024_CIPHERTEXTBYTES, 4 * 320 + 128);
+    assert_eq!(KYBER_1024_CIPHERTEXTBYTES, 4 * 352 + 160);
 }
 
 #[test]
