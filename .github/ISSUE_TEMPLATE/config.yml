@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Zikithezikit/pykyber/security/advisories/new
+    about: >-
+      Security problems (timing side channels, secret handling, incorrect
+      crypto behavior) must not be filed as public issues. Use GitHub's
+      private vulnerability reporting (see SECURITY.md at the repo root).
