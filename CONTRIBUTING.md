@@ -1,0 +1,135 @@
+# Contributing to PyKyber
+
+PyKyber is a post-quantum KEM library: round-3 CRYSTALS-Kyber, implemented
+from scratch in Rust (no third-party crypto at runtime) and exposed to Python
+through PyO3. A 2.0 release adds ML-KEM (FIPS 203) beside the legacy Kyber
+API. This file covers how to work on the repo; `AGENTS.md` is the binding
+rulebook for humans *and* AI agents, and `PLAN-2.0.md` tracks the 2.0 work
+packages.
+
+## Development setup
+
+Requirements: a Rust toolchain (stable), Python >= 3.8, and `maturin`.
+
+```bash
+git clone https://github.com/Zikithezikit/pykyber
+cd pykyber
+python -m venv .venv
+source .venv/bin/activate
+pip install maturin pytest
+maturin develop          # builds the Rust extension into .venv
+pip install -e .
+```
+
+## Build & test commands
+
+```bash
+maturin develop                 # rebuild the .so after any Rust change
+pytest python/tests             # Python tests (needs the built .so)
+cargo fmt --check               # formatting
+cargo clippy --all-targets      # lints (~59 pre-existing diagnostics are being cleared in 2.0)
+cargo test --no-fail-fast       # Rust unit + integration tests
+make dev-build                  # clean + rebuild + regenerate python/pykyber/_pykyber.pyi
+make benchmark                  # performance-tests/benchmark.py
+```
+
+Known baseline failures being fixed as part of 2.0 (issues #5 and #7):
+`tests/unit_params.rs::test_kyber_1024_params` fails, and `cargo clippy` has
+~59 pre-existing diagnostics. Don't fix unrelated baseline failures inside a
+feature PR.
+
+These commands are the gate for every PR:
+
+```bash
+cargo fmt --check && cargo clippy --all-targets -- -D warnings \
+  && cargo test --no-fail-fast && pytest python/tests
+```
+
+## Branching and PRs
+
+All 2.0 development happens on **`dev-v2`**. The default branch is still
+`dev` until the 2.0 release; `main` is the stable release branch. During 2.0:
+
+- Branch from `dev-v2` as `wp<N>-<short-name>` (e.g. `wp3-mlkem-keygen`),
+  where `N` is the work-package number from `PLAN-2.0.md` / the linked sub-issue of #3.
+- Open every PR **against `dev-v2`**. Never target `main` or `dev`.
+- One work package (or less) per PR. Crypto PRs should stay under ~400
+  changed lines excluding vector files.
+- Nobody merges into `main` or `dev` during 2.0; the maintainer merges
+  `dev-v2` into `main` once, when 2.0 is done.
+- PRs are **rebase-merged** into `dev-v2`, so the reviewed commits land
+  unchanged. That is why every commit in a PR must build and pass the checks
+  on its own, not just the tip.
+
+## Commits
+
+- **Conventional Commits**: `feat:`, `fix:`, `test:`, `ci:`, `docs:`,
+  `security:`, `refactor:`.
+- **Never** push directly to `dev-v2`, `main`, or `dev`; never force-push
+  shared branches. Force-pushing is only ever done to your own `wp<N>-*`
+  branch (`git push --force-with-lease`).
+- Keep refactors separate from behavior changes.
+- **Fix code in the commit that introduced it.** When review or CI finds a
+  problem, don't add a "fix review comments" commit. Make a fixup commit and
+  fold it in:
+
+  ```bash
+  git commit --fixup=<sha-of-commit-being-fixed>
+  GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash dev-v2
+  git push --force-with-lease
+  ```
+
+- Rebase your branch onto the latest `dev-v2` instead of merging `dev-v2`
+  into your branch (same recipe, without the fixups).
+- To prove the *whole* branch passes, not only the tip:
+
+  ```bash
+  git rebase --exec 'cargo fmt --check && cargo clippy --all-targets -- -D warnings \
+    && cargo test --no-fail-fast' dev-v2
+  ```
+
+## Code rules (the short list)
+
+The full rules are in `AGENTS.md`; the ones most often violated:
+
+- **Legacy Kyber output never changes.** `Kyber512/768/1024` must produce
+  byte-identical results to v1.0.5. The golden vectors in
+  `tests/vectors/legacy-kyber-v1.0.5.json` (added in WP-1) are append-only:
+  never regenerate or edit them to make a test pass.
+- **Follow the spec, not memory.** ML-KEM code implements FIPS 203 (final).
+  Cite the algorithm number in comments (`// FIPS 203 Alg 18, step 9`).
+  Round-3 Kyber and ML-KEM differ in details that look like typos; don't
+  "fix" one into the other.
+- **Never weaken a test to make it pass.** No loosened assertions, no
+  regenerating expected values from the code under test, no `#[ignore]`/skip.
+- **No new runtime dependencies.** Dev-only test crates are fine.
+- **Constant-time and secret-handling rules** apply to anything derived from
+  key material, seeds, randomness, or decryption results: no secret-dependent
+  branches, no `/`/`%` on secrets, no secret-indexed lookups, no `==` on
+  secret slices. Zeroize secret intermediates on every exit path. Validate
+  inputs before any secret-dependent work.
+- No `unsafe`. No `unwrap`/`expect`/panics on attacker-controlled input
+  outside tests. Panics must not cross the PyO3 boundary.
+- Python-side inputs are validated in `python/pykyber/_validation.py` before
+  calling Rust; errors are `KyberError` (or a subclass), never bare
+  `Exception`.
+
+## Test vectors
+
+- Golden vectors generated by this project live in `tests/vectors/` and are
+  append-only once introduced.
+- External vectors (NIST ACVP, C2SP CCTV, Wycheproof) are **never committed**.
+  They are fetched at test time from a pinned commit and verified against
+  SHA-256 hashes in `tests/vectors/manifest.json`.
+- Reference implementations (Go `crypto/mlkem`, RustCrypto, libcrux, ...) are
+  for reading and output comparison in dev-only tests. Their code is never
+  copied into this repo.
+
+## Reporting security issues
+
+Do not open a public issue for security problems. Use GitHub's private
+vulnerability reporting (Security tab, "Report a vulnerability"); the
+details are in [SECURITY.md](SECURITY.md).
+
+AI agents get the same review as human PRs and follow the same rules; agents
+never merge.
