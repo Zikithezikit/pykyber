@@ -1,0 +1,5 @@
+# Set-up per issue #4: the Rust crypto core and the security report are
+# reviewed by the project owner. Everything arrives already authored and
+# must be second-checked (constant-time hand crypto, no third-party crypto).
+/src/               @Zikithezikit
+/SECURITY.md        @Zikithezikit
