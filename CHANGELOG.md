@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- 2.0 development: repo setup (issue #4), including CI on pushes to `dev-v2`, new `CONTRIBUTING.md`, root `SECURITY.md` (vulnerability-reporting policy + migrated security findings log), PR and issue templates, and `CODEOWNERS` routing `src/` and `SECURITY.md` to the maintainer for review.
+- 2.0 development: repo setup (issue #4), including CI on pushes to `dev-v2`, new `CONTRIBUTING.md`, root `SECURITY.md` (vulnerability-reporting policy + migrated security findings log), PR and issue templates, `CODEOWNERS` routing `src/` and `SECURITY.md` to the maintainer for review, and PR-description rules for agents in AGENTS.md (plain prose, ASCII-checked post text, REST fallback).
 
 ## v1.0.5
 
