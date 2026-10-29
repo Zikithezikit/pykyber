@@ -9,6 +9,11 @@ on:
   push:
     branches:
       - main
+      # Manual edit, WP-0 / issue #4: 2.0 development happens on dev-v2, so
+      # CI must also run on pushes there (PRs already run on pull_request).
+      # `maturin generate-ci github` will not emit this line - re-add it if
+      # the file is ever regenerated.
+      - dev-v2
     tags:
       - '*'
   pull_request:
