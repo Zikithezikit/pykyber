@@ -1,6 +1,8 @@
 # PyKyber
 
-A Python library for Kyber post-quantum key encapsulation, implemented in Rust.
+A Python library for post-quantum key encapsulation, implemented in Rust: ML-KEM (FIPS 203), plus the legacy round-3 CRYSTALS-Kyber classes, which are deprecated.
+
+ML-KEM and round-3 Kyber are not interoperable. If you are moving from Kyber, read the [migration guide](docs/migration.md) first.
 
 ## Installation
 
@@ -14,10 +16,10 @@ pip install pykyber
 import pykyber
 
 # Generate a keypair (Alice)
-alice_keypair = pykyber.Kyber768()
+alice_keypair = pykyber.ML_KEM_768()
 
 # Encapsulate - create shared secret (Bob)
-bob_result = pykyber.Kyber768.encapsulate(alice_keypair.public_key)
+bob_result = pykyber.ML_KEM_768.encapsulate(alice_keypair.public_key)
 
 # Decapsulate - recover shared secret (Alice)
 shared_secret = alice_keypair.decapsulate(bob_result.ciphertext)
@@ -26,19 +28,22 @@ shared_secret = alice_keypair.decapsulate(bob_result.ciphertext)
 print(f"Match: {bob_result.shared_secret == shared_secret}")
 ```
 
+ML-KEM-768 is the parameter set NIST recommends as the default (FIPS 203, section 8).
+
 ## API Usage
 
 ```python
 import pykyber
 
 # Create a keypair - instant generation on class instantiation
-keypair = pykyber.Kyber512()   # ~AES-128 security
-keypair = pykyber.Kyber768()   # ~AES-192 security
-keypair = pykyber.Kyber1024() # ~AES-256 security
+keypair = pykyber.ML_KEM_512()    # security category 1
+keypair = pykyber.ML_KEM_768()    # security category 3 (NIST default)
+keypair = pykyber.ML_KEM_1024()   # security category 5
 
-# Deterministic key generation from a 64-byte seed
+# Deterministic key generation from a 64-byte seed d || z (the seed is secret)
 seed = bytes(range(64))
-keypair = pykyber.Kyber768(seed=seed)
+keypair = pykyber.ML_KEM_768(seed=seed)
+assert keypair.seed == seed        # None for randomly generated keypairs
 
 # Access raw key bytes
 public_key = keypair.public_key    # bytes
@@ -70,49 +75,59 @@ shared_secret = keypair.decapsulate(result.ciphertext)
 # Static methods - use without creating a keypair instance
 
 # Encapsulate with just a public key
-result = pykyber.Kyber768.encapsulate(public_key)
+result = pykyber.ML_KEM_768.encapsulate(public_key)
 
 # Decapsulate with just ciphertext and secret key
-shared_secret = pykyber.Kyber768.decapsulate(ciphertext, secret_key)
+shared_secret = pykyber.ML_KEM_768.decapsulate(result.ciphertext, secret_key)
 
 # Load a Keypair object from existing keys
-keypair = pykyber.Kyber768.from_keys(public_key, secret_key)
+keypair = pykyber.ML_KEM_768.from_keys(public_key, secret_key)
 ```
 
 ## Key Sizes
 
-| Variant   | Public Key | Secret Key | Ciphertext | Shared Secret |
-|-----------|------------|------------|------------|---------------|
-| Kyber-512 | 800 bytes  | 1632 bytes | 768 bytes  | 32 bytes      |
-| Kyber-768 | 1184 bytes | 2400 bytes | 1088 bytes | 32 bytes      |
-| Kyber-1024| 1568 bytes | 3168 bytes | 1568 bytes | 32 bytes      |
+| Variant     | Public Key | Secret Key | Ciphertext | Shared Secret |
+|-------------|------------|------------|------------|---------------|
+| ML-KEM-512  | 800 bytes  | 1632 bytes | 768 bytes  | 32 bytes      |
+| ML-KEM-768  | 1184 bytes | 2400 bytes | 1088 bytes | 32 bytes      |
+| ML-KEM-1024 | 1568 bytes | 3168 bytes | 1568 bytes | 32 bytes      |
 
+The legacy Kyber classes use the same sizes, so a key or ciphertext cannot be identified as Kyber or ML-KEM from its length.
 
 ## Error Handling
 
-All operations raise `KyberError` when invalid input is provided:
+All operations raise `KyberError`, or one of its subclasses, when invalid input is provided:
 
 ```python
 import pykyber
 
 try:
-    pykyber.Kyber768.encapsulate(b"too_short")
+    pykyber.ML_KEM_768.encapsulate(b"too_short")
 except pykyber.KyberError as e:
     print(e)
-# Output: Invalid public key for Kyber768.encapsulate: expected 1184 bytes, got 10. 
-# Ensure you're using the correct Kyber variant (Kyber512=800, Kyber768=1184, Kyber1024=1568).
+# Output: Invalid public_key for ML-KEM-768.encapsulate: expected 1184 bytes, got 9.
 ```
 
 Common error cases:
-- **Invalid public key size**: Wrong number of bytes for the Kyber variant
-- **Invalid ciphertext size**: Wrong number of bytes when decapsulating
-- **Invalid secret key size**: Wrong number of bytes for the Kyber variant
-- **Invalid seed size**: Seed must be exactly 64 bytes for deterministic generation
+- Invalid key, ciphertext or seed size: `InvalidInputError`
+- Encapsulation key that fails the FIPS 203 section 7.2 check: `InvalidEncapsulationKeyError`
+- Decapsulation key that fails the FIPS 203 section 7.3 check: `InvalidDecapsulationKeyError`
+- An object of another algorithm: (a `Kyber*` keypair passed to an `ML_KEM_*` method, or another ML-KEM parameter set): `AlgorithmMismatchError`
+
+A well-formed ciphertext that was not made for the key does not raise; decapsulation returns a different, pseudorandom secret (implicit rejection, FIPS 203).
+
+## Deprecated: Kyber
+
+`Kyber512`, `Kyber768` and `Kyber1024` implement round-3 CRYSTALS-Kyber. They still work and their output has not changed from 1.0.5, but they are deprecated in favor of ML-KEM: the first use of one in a process emits a `KyberDeprecationWarning` (a `DeprecationWarning`, which Python hides by default unless it is raised from `__main__`; run with `-W default::DeprecationWarning` to see it). The [migration guide](docs/migration.md) explains how to move.
+
+## Security status
+
+The ML-KEM code is checked against the official ACVP, C2SP CCTV and Wycheproof test vectors and against an independent implementation (a dev-only differential test). It has not been independently audited, and the side-channel review planned for 2.0 has not been completed, so this README makes no constant-time claim. Report vulnerabilities as described in [SECURITY.md](SECURITY.md). Secret keys and shared secrets are returned as immutable Python `bytes` that cannot be wiped from memory.
 
 
 ## Performance
 
-Performance benchmarks (100 iterations each):
+Performance benchmarks of the legacy Kyber classes (100 iterations each; the benchmark has not been rerun for ML-KEM):
 
 | Variant | Keypair | Encapsulate | Decapsulate |
 |---------|---------|-------------|-------------|
