@@ -40,7 +40,7 @@ fn unpack_ciphertext(b: &mut Polyvec, v: &mut Poly, c: &[u8]) {
     poly_decompress(v, &c[KYBER_POLYVECCOMPRESSEDBYTES..]);
 }
 
-fn rej_uniform(r: &mut [i16], len: usize, buf: &[u8], buflen: usize) -> usize {
+pub(crate) fn rej_uniform(r: &mut [i16], len: usize, buf: &[u8], buflen: usize) -> usize {
     let (mut ctr, mut pos) = (0usize, 0usize);
     let (mut val0, mut val1);
 
