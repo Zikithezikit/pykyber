@@ -1,0 +1,404 @@
+{
+  "comment": "Reviewed conditional branches that are neither loop back edges nor panic guards, per function (name without hash) and per target; see scripts/asm_check.py. 'max' is the ceiling per target; a target that is absent allows none. Entries were reviewed by reading the compare that feeds each branch (--show-other). A change in the count means the code generation changed and the entry needs a new review.",
+  "other_branches": [
+    {
+      "function": "core::ptr::drop_in_place$LT$zeroize..Zeroizing$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$",
+      "group": "zeroize",
+      "max": {
+        "x86_64": 8,
+        "aarch64": 3,
+        "i686": 3,
+        "armv7": 3
+      },
+      "reason": "Zeroizing<Vec<u8>> drop: loop over the (public) vector length with a head/tail split; the bytes being wiped are never compared."
+    },
+    {
+      "function": "pykyber::kyber::fips202::keccak_absorb_once",
+      "group": "keccak",
+      "max": {
+        "x86_64": 5,
+        "aarch64": 5,
+        "i686": 4,
+        "armv7": 4
+      },
+      "reason": "Sponge buffering: tests of the input and output lengths and of the byte position inside the rate (0x88 for SHAKE256, 0x68/0x48 for the SHA3 rates). Lengths are public in every call here (fixed per parameter set, or the ciphertext length). The permutation itself has no data-dependent branch. Unrolled byte-copy tails give the large counts; on i686 the length is spilled to the stack, so the compare reads memory."
+    },
+    {
+      "function": "pykyber::kyber::fips202::sha3_256",
+      "group": "keccak",
+      "max": {
+        "x86_64": 21,
+        "aarch64": 29,
+        "i686": 3,
+        "armv7": 17
+      },
+      "reason": "Sponge buffering: tests of the input and output lengths and of the byte position inside the rate (0x88 for SHAKE256, 0x68/0x48 for the SHA3 rates). Lengths are public in every call here (fixed per parameter set, or the ciphertext length). The permutation itself has no data-dependent branch. Unrolled byte-copy tails give the large counts; on i686 the length is spilled to the stack, so the compare reads memory."
+    },
+    {
+      "function": "pykyber::kyber::fips202::sha3_512",
+      "group": "keccak",
+      "max": {
+        "x86_64": 49,
+        "aarch64": 57,
+        "i686": 7,
+        "armv7": 33
+      },
+      "reason": "Sponge buffering: tests of the input and output lengths and of the byte position inside the rate (0x88 for SHAKE256, 0x68/0x48 for the SHA3 rates). Lengths are public in every call here (fixed per parameter set, or the ciphertext length). The permutation itself has no data-dependent branch. Unrolled byte-copy tails give the large counts; on i686 the length is spilled to the stack, so the compare reads memory."
+    },
+    {
+      "function": "pykyber::kyber::fips202::shake256",
+      "group": "keccak",
+      "max": {
+        "x86_64": 144,
+        "aarch64": 144,
+        "i686": 37,
+        "armv7": 15
+      },
+      "reason": "Sponge buffering: tests of the input and output lengths and of the byte position inside the rate (0x88 for SHAKE256, 0x68/0x48 for the SHA3 rates). Lengths are public in every call here (fixed per parameter set, or the ciphertext length). The permutation itself has no data-dependent branch. Unrolled byte-copy tails give the large counts; on i686 the length is spilled to the stack, so the compare reads memory."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::gen_matrix",
+      "group": "sampling",
+      "max": {
+        "x86_64": 9,
+        "aarch64": 9,
+        "i686": 8,
+        "armv7": 6
+      },
+      "reason": "Rejection sampling of the matrix A from the XOF output keyed by the public rho (FIPS 203 Algorithm 7). Branches test a sampled 12-bit value against q, the output count against 256, and the buffer position against the SHAKE128 rate; all of it is public data."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::gen_matrix_1024",
+      "group": "sampling",
+      "max": {
+        "x86_64": 9,
+        "aarch64": 9,
+        "i686": 8,
+        "armv7": 6
+      },
+      "reason": "Rejection sampling of the matrix A from the XOF output keyed by the public rho (FIPS 203 Algorithm 7). Branches test a sampled 12-bit value against q, the output count against 256, and the buffer position against the SHAKE128 rate; all of it is public data."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::gen_matrix_512",
+      "group": "sampling",
+      "max": {
+        "x86_64": 15,
+        "aarch64": 15,
+        "i686": 14,
+        "armv7": 7
+      },
+      "reason": "Rejection sampling of the matrix A from the XOF output keyed by the public rho (FIPS 203 Algorithm 7). Branches test a sampled 12-bit value against q, the output count against 256, and the buffer position against the SHAKE128 rate; all of it is public data."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::indcpa_dec",
+      "group": "indcpa",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Loop-exit test on the output buffer position (cmp against 0x800/0xa00/2560) and a vector-loop prologue test; counters only."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::indcpa_dec_512",
+      "group": "indcpa",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Loop-exit test on the output buffer position (cmp against 0x800/0xa00/2560) and a vector-loop prologue test; counters only."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::indcpa_enc",
+      "group": "indcpa",
+      "max": {
+        "x86_64": 2,
+        "aarch64": 2,
+        "i686": 2,
+        "armv7": 1
+      },
+      "reason": "Loop-exit test on the output buffer position (cmp against 0x800/0xa00/2560) and a vector-loop prologue test; counters only."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::indcpa_enc_1024",
+      "group": "indcpa",
+      "max": {
+        "x86_64": 2,
+        "aarch64": 2,
+        "i686": 2,
+        "armv7": 1
+      },
+      "reason": "Loop-exit test on the output buffer position (cmp against 0x800/0xa00/2560) and a vector-loop prologue test; counters only."
+    },
+    {
+      "function": "pykyber::kyber::indcpa::indcpa_enc_512",
+      "group": "indcpa",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Loop-exit test on the output buffer position (cmp against 0x800/0xa00/2560) and a vector-loop prologue test; counters only."
+    },
+    {
+      "function": "pykyber::kyber::kem::crypto_kem_dec",
+      "group": "decaps-entry",
+      "max": {
+        "x86_64": 3,
+        "aarch64": 3,
+        "i686": 3,
+        "armv7": 3
+      },
+      "reason": "Length checks on dk, c and the shared secret buffer (public sizes, validated before any secret-dependent work, as AGENTS.md requires), tests of the Result tag, the dk hash check H(ek) == h (both sides are derived from the public ek, so it may branch or call bcmp), and remainder loops of zeroize, copy and the hash check on public lengths. In every listing the compared operand is an immediate, a length or a loop counter; none is derived from m', K, c' or the reject flag."
+    },
+    {
+      "function": "pykyber::kyber::kem::crypto_kem_dec_1024",
+      "group": "decaps-entry",
+      "max": {
+        "x86_64": 3,
+        "aarch64": 3,
+        "i686": 3,
+        "armv7": 3
+      },
+      "reason": "Length checks on dk, c and the shared secret buffer (public sizes, validated before any secret-dependent work, as AGENTS.md requires), tests of the Result tag, the dk hash check H(ek) == h (both sides are derived from the public ek, so it may branch or call bcmp), and remainder loops of zeroize, copy and the hash check on public lengths. In every listing the compared operand is an immediate, a length or a loop counter; none is derived from m', K, c' or the reject flag."
+    },
+    {
+      "function": "pykyber::kyber::kem::crypto_kem_dec_512",
+      "group": "decaps-entry",
+      "max": {
+        "x86_64": 3,
+        "aarch64": 3,
+        "i686": 3,
+        "armv7": 3
+      },
+      "reason": "Length checks on dk, c and the shared secret buffer (public sizes, validated before any secret-dependent work, as AGENTS.md requires), tests of the Result tag, the dk hash check H(ek) == h (both sides are derived from the public ek, so it may branch or call bcmp), and remainder loops of zeroize, copy and the hash check on public lengths. In every listing the compared operand is an immediate, a length or a loop counter; none is derived from m', K, c' or the reject flag."
+    },
+    {
+      "function": "pykyber::kyber::ntt::ntt_inverse",
+      "group": "ntt",
+      "max": {
+        "x86_64": 18,
+        "aarch64": 4,
+        "i686": 4
+      },
+      "reason": "Loop-structure tests (cmp against a counter or the stride, vector-loop prologue) in the layer loops of the inverse NTT; no coefficient is compared."
+    },
+    {
+      "function": "pykyber::kyber::poly::poly_compress",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::poly::poly_compress_1024",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::poly::poly_decompress_1024",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::poly::poly_tomsg",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_compress",
+      "group": "compress",
+      "max": {
+        "aarch64": 3,
+        "i686": 3
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_compress_1024",
+      "group": "compress",
+      "max": {
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_compress_512",
+      "group": "compress",
+      "max": {
+        "aarch64": 2,
+        "i686": 2
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_decompress",
+      "group": "compress",
+      "max": {
+        "x86_64": 3,
+        "aarch64": 3,
+        "i686": 3
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_decompress_1024",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_decompress_512",
+      "group": "compress",
+      "max": {
+        "x86_64": 2,
+        "aarch64": 2,
+        "i686": 2
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_frombytes",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_frombytes_1024",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::polyvec::polyvec_frombytes_512",
+      "group": "compress",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1
+      },
+      "reason": "Vector-loop prologue and epilogue tests (cmp against 3, 7, 8 or 15 left-over elements) that choose between the unrolled and the scalar loop; counts of coefficients, never coefficient values."
+    },
+    {
+      "function": "pykyber::kyber::symmetric::xof_squeeze_blocks",
+      "group": "keccak",
+      "max": {
+        "aarch64": 2
+      },
+      "reason": "Sponge buffering: tests of the input and output lengths and of the byte position inside the rate (0x88 for SHAKE256, 0x68/0x48 for the SHA3 rates). Lengths are public in every call here (fixed per parameter set, or the ciphertext length). The permutation itself has no data-dependent branch. Unrolled byte-copy tails give the large counts; on i686 the length is spilled to the stack, so the compare reads memory."
+    },
+    {
+      "function": "pykyber::mlkem::ct::reject_on_mismatch",
+      "group": "reject",
+      "max": {
+        "x86_64": 5,
+        "aarch64": 6,
+        "i686": 5,
+        "armv7": 1
+      },
+      "reason": "Tests of the slice length (zero length, 4/8/32-byte vector-loop thresholds) and of the remainder after the vector loop (cmp len, done). The accumulated difference `diff` is only used by the final cset/neg/bif select: it never reaches a flag-setting instruction that feeds a branch. Read on aarch64 in full; the x86_64, i686 and armv7 listings show the same compare forms (counter or length against counter, length against immediate)."
+    },
+    {
+      "function": "pykyber::mlkem::kem::decaps",
+      "group": "decaps-entry",
+      "max": {
+        "x86_64": 26,
+        "aarch64": 14,
+        "i686": 14,
+        "armv7": 14
+      },
+      "reason": "Length checks on dk, c and the shared secret buffer (public sizes, validated before any secret-dependent work, as AGENTS.md requires), tests of the Result tag, the dk hash check H(ek) == h (both sides are derived from the public ek, so it may branch or call bcmp), and remainder loops of zeroize, copy and the hash check on public lengths. In every listing the compared operand is an immediate, a length or a loop counter; none is derived from m', K, c' or the reject flag."
+    },
+    {
+      "function": "pykyber::mlkem::kpke::decrypt",
+      "group": "k-pke",
+      "max": {
+        "x86_64": 6,
+        "aarch64": 8,
+        "i686": 6,
+        "armv7": 12
+      },
+      "reason": "Length checks at entry, zero-length and loop-exit tests (cmp against 0x200 and similar: the coefficient count of a polynomial or the byte length of a vector), Result tags, and the rejection-sampling guard in matrix_row. The compared operands are immediates, lengths or counters in every listing."
+    },
+    {
+      "function": "pykyber::mlkem::kpke::encrypt",
+      "group": "k-pke",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 2,
+        "i686": 1,
+        "armv7": 1
+      },
+      "reason": "Length checks at entry, zero-length and loop-exit tests (cmp against 0x200 and similar: the coefficient count of a polynomial or the byte length of a vector), Result tags, and the rejection-sampling guard in matrix_row. The compared operands are immediates, lengths or counters in every listing."
+    },
+    {
+      "function": "pykyber::mlkem::kpke::matrix_row",
+      "group": "k-pke",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1,
+        "armv7": 1
+      },
+      "reason": "Length checks at entry, zero-length and loop-exit tests (cmp against 0x200 and similar: the coefficient count of a polynomial or the byte length of a vector), Result tags, and the rejection-sampling guard in matrix_row. The compared operands are immediates, lengths or counters in every listing."
+    },
+    {
+      "function": "pykyber::mlkem::kpke::sample_noise",
+      "group": "k-pke",
+      "max": {
+        "x86_64": 1,
+        "aarch64": 1,
+        "i686": 1,
+        "armv7": 1
+      },
+      "reason": "Length checks at entry, zero-length and loop-exit tests (cmp against 0x200 and similar: the coefficient count of a polynomial or the byte length of a vector), Result tags, and the rejection-sampling guard in matrix_row. The compared operands are immediates, lengths or counters in every listing."
+    },
+    {
+      "function": "pykyber::mlkem::sample::sample_ntt",
+      "group": "sampling",
+      "max": {
+        "x86_64": 6,
+        "aarch64": 6,
+        "i686": 6,
+        "armv7": 2
+      },
+      "reason": "Rejection sampling of the matrix A from the XOF output keyed by the public rho (FIPS 203 Algorithm 7). Branches test a sampled 12-bit value against q, the output count against 256, and the buffer position against the SHAKE128 rate; all of it is public data."
+    }
+  ],
+  "memcmp_calls": {
+    "pykyber::mlkem::kem::decaps": {
+      "max": {
+        "armv7": 1
+      },
+      "reason": "check_dk (FIPS 203 section 7.3) compares sha3_256(ek) with the h stored in dk. Both are derived from the public encapsulation key, so a variable-time compare reveals nothing about the secret part of dk. On armv7 the 32-byte compare of this one site is a bcmp call; the ciphertext comparison does not use it (it goes through reject_on_mismatch)."
+    }
+  }
+}
