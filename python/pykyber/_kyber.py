@@ -4,7 +4,18 @@ from typing import Optional
 from ._deprecation import _deprecated_kyber
 from ._error import KyberError
 from ._types import EncapsulationResult, Keypair
-from ._validation import _validate_encapsulate, _validate_decapsulate, _validate_keypair, _validate_pk
+from ._validation import (
+    _validate_decapsulate,
+    _validate_encapsulate,
+    _validate_key_binding,
+    _validate_keypair,
+    _validate_pk,
+)
+
+# Bytes of one serialized polynomial (ByteEncode12 of 256 coefficients).
+_POLY_BYTES = 384
+# Module rank k: the IND-CPA secret key s of a round-3 Kyber secret key is k polynomials.
+_K_512, _K_768, _K_1024 = 2, 3, 4
 
 
 class Kyber512:
@@ -41,9 +52,13 @@ class Kyber512:
     @classmethod
     @_deprecated_kyber
     def from_keys(cls, public_key: bytes, secret_key: bytes) -> Keypair:
-        """Create a Keypair object from existing public and secret keys."""
+        """Create a Keypair object from existing public and secret keys.
+
+        Raises KyberError if the public key is not the one stored inside the secret key.
+        """
         from . import _pykyber
         _validate_pk(public_key, cls.PUBLIC_KEY_SIZE, f"{cls.__name__}.from_keys")
+        _validate_key_binding(public_key, secret_key, cls.SECRET_KEY_SIZE, _K_512 * _POLY_BYTES, f"{cls.__name__}.from_keys")
         return Keypair(secret_key, public_key, 
                        _validate_encapsulate(_pykyber._encapsulate_512, cls.PUBLIC_KEY_SIZE, cls.__name__),
                        _validate_decapsulate(_pykyber._decapsulate_512, cls.CIPHERTEXT_SIZE, cls.__name__))
@@ -83,9 +98,13 @@ class Kyber768:
     @classmethod
     @_deprecated_kyber
     def from_keys(cls, public_key: bytes, secret_key: bytes) -> Keypair:
-        """Create a Keypair object from existing public and secret keys."""
+        """Create a Keypair object from existing public and secret keys.
+
+        Raises KyberError if the public key is not the one stored inside the secret key.
+        """
         from . import _pykyber
         _validate_pk(public_key, cls.PUBLIC_KEY_SIZE, f"{cls.__name__}.from_keys")
+        _validate_key_binding(public_key, secret_key, cls.SECRET_KEY_SIZE, _K_768 * _POLY_BYTES, f"{cls.__name__}.from_keys")
         return Keypair(secret_key, public_key, 
                        _validate_encapsulate(_pykyber._encapsulate_768, cls.PUBLIC_KEY_SIZE, cls.__name__),
                        _validate_decapsulate(_pykyber._decapsulate_768, cls.CIPHERTEXT_SIZE, cls.__name__))
@@ -125,9 +144,13 @@ class Kyber1024:
     @classmethod
     @_deprecated_kyber
     def from_keys(cls, public_key: bytes, secret_key: bytes) -> Keypair:
-        """Create a Keypair object from existing public and secret keys."""
+        """Create a Keypair object from existing public and secret keys.
+
+        Raises KyberError if the public key is not the one stored inside the secret key.
+        """
         from . import _pykyber
         _validate_pk(public_key, cls.PUBLIC_KEY_SIZE, f"{cls.__name__}.from_keys")
+        _validate_key_binding(public_key, secret_key, cls.SECRET_KEY_SIZE, _K_1024 * _POLY_BYTES, f"{cls.__name__}.from_keys")
         return Keypair(secret_key, public_key, 
                        _validate_encapsulate(_pykyber._encapsulate_1024, cls.PUBLIC_KEY_SIZE, cls.__name__),
                        _validate_decapsulate(_pykyber._decapsulate_1024, cls.CIPHERTEXT_SIZE, cls.__name__))

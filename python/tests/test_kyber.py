@@ -1601,3 +1601,44 @@ class TestRandomnessFailure:
         with pytest.raises(pykyber.KyberError) as excinfo:
             _validate_keypair(boom)()
         assert not isinstance(excinfo.value, pykyber.RandomnessError)
+
+
+# from_keys must bind the public key to the secret key it is paired with.
+
+_LEVELS = [pykyber.Kyber512, pykyber.Kyber768, pykyber.Kyber1024]
+
+
+@pytest.mark.parametrize("cls", _LEVELS)
+class TestFromKeysBinding:
+    def test_matching_pair_is_accepted(self, cls):
+        original = cls()
+        rebuilt = cls.from_keys(original.public_key, original.secret_key)
+        result = rebuilt.encapsulate()
+        assert original.decapsulate(result.ciphertext) == result.shared_secret
+        assert rebuilt.decapsulate(result.ciphertext) == result.shared_secret
+
+    def test_mismatched_pair_is_rejected(self, cls):
+        a, b = cls(), cls()
+        with pytest.raises(pykyber.KyberError, match="does not match"):
+            cls.from_keys(a.public_key, b.secret_key)
+        with pytest.raises(pykyber.KyberError, match="does not match"):
+            cls.from_keys(b.public_key, a.secret_key)
+
+    @pytest.mark.parametrize("position", [0, -1])
+    def test_one_changed_byte_of_the_public_key_is_rejected(self, cls, position):
+        pair = cls()
+        pk = bytearray(pair.public_key)
+        pk[position] ^= 1
+        with pytest.raises(pykyber.KyberError, match="does not match"):
+            cls.from_keys(bytes(pk), pair.secret_key)
+
+    def test_short_public_key_keeps_its_size_error(self, cls):
+        pair = cls()
+        with pytest.raises(pykyber.KyberError, match="Invalid public key"):
+            cls.from_keys(pair.public_key[:-1], pair.secret_key)
+
+    def test_short_secret_key_keeps_its_size_error(self, cls):
+        pair = cls()
+        short = cls.from_keys(pair.public_key, pair.secret_key[:-1])
+        with pytest.raises(pykyber.KyberError, match="Invalid input for 'sk'"):
+            short.decapsulate(pair.encapsulate().ciphertext)
