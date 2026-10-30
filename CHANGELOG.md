@@ -2,11 +2,16 @@
 
 ## Unreleased
 
+## v2.0.0
+
+Planned release; not tagged or published yet. Adds ML-KEM (FIPS 203) beside the legacy Kyber classes, which are deprecated. Kyber output is unchanged from 1.0.5. Kyber (round 3) and ML-KEM are not interoperable, so both sides of a connection must switch; see `docs/migration.md`.
+
 - 2.0 development: repo setup (issue #4), including CI on pushes to `dev-v2`, new `CONTRIBUTING.md`, root `SECURITY.md` (vulnerability-reporting policy + migrated security findings log), PR and issue templates, `CODEOWNERS` routing `src/` and `SECURITY.md` to the maintainer for review, and PR-description rules for agents in AGENTS.md (plain prose, ASCII-checked post text, REST fallback).
 - Legacy freeze (issue #6): golden vectors capture the byte output of pykyber v1.0.5 (append-only `tests/vectors/legacy-kyber-v1.0.5.json`, with the generator); Rust and Python tests fail on any change to seeded keygen, seeded encapsulation, or decapsulation output.
 - CI (issue #7): a `test` job on Linux, macOS and Windows (oldest and newest Python) runs `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --locked`, `maturin develop` and `pytest`; a `commits` job re-runs them on every commit of a PR via `git rebase --exec scripts/check.sh`. `requirements-dev.txt` declares maturin and pytest; wheel release now waits for `test`.
 - ML-KEM (issue #13): new classes `ML_KEM_512`, `ML_KEM_768` and `ML_KEM_1024` (FIPS 203) with the same shape as `Kyber*` (an instance is a keypair; static `encapsulate`, `decapsulate`, `from_keys`; hex/b64/dict; tuple unpacking). A 64-byte seed `d || z` gives deterministic keys and is exposed as `.seed` only for such keypairs. ML-KEM methods refuse `Kyber*` objects by type (`AlgorithmMismatchError`); raw bytes cannot be told apart. New `KyberError` subclasses: `InvalidInputError`, `InvalidEncapsulationKeyError`, `InvalidDecapsulationKeyError`, `RandomnessError`, `DecapsulationError`, `AlgorithmMismatchError`. The Kyber classes are unchanged.
 - Kyber deprecation (issue #14): the first use of any `Kyber512/768/1024` entry point (constructor, `from_keys`, static `encapsulate` or `decapsulate`) emits one `KyberDeprecationWarning` (a `DeprecationWarning` subclass, exported from `pykyber`) per process. Importing does not warn, `ML_KEM_*` never warns, and Kyber output is unchanged. Python shows `DeprecationWarning` by default only when it is attributed to `__main__`; run with `-W default::DeprecationWarning` or call `warnings.simplefilter` to see it elsewhere.
+- Docs (issue #15): the README quick start, `docs/api.md` and `docs/index.md` use `ML_KEM_768` (NIST's default parameter set, FIPS 203 section 8), the Kyber classes are documented as deprecated, and the new `docs/migration.md` explains the move from Kyber to ML-KEM. The version is 2.0.0 in `Cargo.toml` and `pyproject.toml`.
 
 ## v1.0.5
 
