@@ -8,5 +8,22 @@
       "ML-KEM-encapDecap-FIPS203/internalProjection.json": "a556952ce869bb89c3a3196a701dad89647c193a34c86eafb61a9d710d5b810f",
       "ML-KEM-encapDecap-FIPS203-tr1/internalProjection.json": "5e88fbd351dc2915b2ab399f5dffd269e1cdbdd0186103ab0e90b374cf592187"
     }
+  },
+  "cctv": {
+    "repository": "C2SP/CCTV",
+    "commit": "50a8ecf2a220f4c8bdc4f085789b8e85c26829e7",
+    "directory": "ML-KEM",
+    "files": {
+      "README.md": "97c8e10fe83d4512edf8d37d8344cdc4a6dde321bac22a098b2ef3793cc3dd4d",
+      "modulus/ML-KEM-512.txt.gz": "4292314fd44bb211a27ef38273dcac32f602601c2f65b15a69773221227bf298",
+      "modulus/ML-KEM-768.txt.gz": "22308df988866e2731c9b79bfa0ce754ea962a77b198436d56bde6481a526af7",
+      "modulus/ML-KEM-1024.txt.gz": "5792e788280ecdf5be7bfd2d8b66e18a0f9b9c80f4beb1d801fd27d20e882bf7",
+      "strcmp/ML-KEM-512.txt": "4bc308bf9a7ac41c0e1c6845e9195d4932f66650e09a4ff76ed780e5f606a42f",
+      "strcmp/ML-KEM-768.txt": "2b09aa46d8b1c7b9a549a25f009cbd3937b98df177e868d3eb6395930079e4fa",
+      "strcmp/ML-KEM-1024.txt": "5059fcb4d5912c37bef560e92608799b576cf785bc20708688f65ffcfca4adfb",
+      "unluckysample/ML-KEM-512.txt": "9d4e0ae011978a8f88a49b755ea6996a693428aaea0477c84331580c15b77a9b",
+      "unluckysample/ML-KEM-768.txt": "fede6f787581dc708e5c3337d7e49de33333d23023470668cd0588b65ad0ba90",
+      "unluckysample/ML-KEM-1024.txt": "8da6cdb2fb0d4e2223dfa5229ec97d4ded7b93bd8b2202e9a7533850c817b8cd"
+    }
   }
 }
