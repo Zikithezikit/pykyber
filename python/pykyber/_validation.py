@@ -2,7 +2,8 @@
 
 from typing import Tuple, Callable, Optional
 
-from ._error import KyberError
+from ._error import AlgorithmMismatchError, InvalidInputError, KyberError
+from ._types import EncapsulationResult, Keypair, MlKemEncapsulationResult, MlKemKeypair
 
 
 def _validate_pk(pk: bytes, expected_size: int, method_name: str) -> None:
@@ -65,3 +66,47 @@ def _validate_keypair(fn: Callable[[Optional[bytes]], Tuple[bytes, bytes]]) -> C
         except Exception as e:
             raise KyberError(str(e)) from None
     return wrapper
+
+
+def _validate_ml_kem_bytes(value: object, kind: str, algorithm: str, expected_size: int, method_name: str) -> bytes:
+    """Return the ``kind`` bytes ("public_key", "secret_key" or "ciphertext") of ``value``.
+
+    ``value`` is ``bytes`` or an ML-KEM object of the same ``algorithm``. A
+    Kyber object, or an ML-KEM object of another parameter set, is refused by
+    type: Kyber and ML-KEM keys have identical sizes, so a length check cannot
+    catch the mix-up. Raw bytes cannot be told apart and are taken as given.
+    """
+    if isinstance(value, (Keypair, EncapsulationResult)):
+        raise AlgorithmMismatchError(
+            f"{method_name} was given a Kyber {type(value).__name__} object, but {algorithm} is not "
+            f"round-3 Kyber: the sizes match, the keys and secrets are not interchangeable."
+        )
+    if isinstance(value, (MlKemKeypair, MlKemEncapsulationResult)):
+        if value.algorithm != algorithm:
+            raise AlgorithmMismatchError(
+                f"{method_name} was given a {value.algorithm} object, but this is {algorithm}."
+            )
+        value = getattr(value, kind, None)
+    if not isinstance(value, bytes):
+        raise InvalidInputError(
+            f"Invalid {kind} for {method_name}: expected bytes or a {algorithm} object holding one, "
+            f"got {type(value).__name__}."
+        )
+    if len(value) != expected_size:
+        raise InvalidInputError(
+            f"Invalid {kind} for {method_name}: expected {expected_size} bytes, got {len(value)}."
+        )
+    return value
+
+
+def _validate_ml_kem_seed(seed: Optional[bytes], expected_size: int, method_name: str) -> Optional[bytes]:
+    """Check the optional 64-byte seed ``d || z`` (bytes only) and return it."""
+    if seed is None:
+        return None
+    if not isinstance(seed, bytes):
+        raise InvalidInputError(f"Invalid seed for {method_name}: expected bytes, got {type(seed).__name__}.")
+    if len(seed) != expected_size:
+        raise InvalidInputError(
+            f"Invalid seed for {method_name}: expected {expected_size} bytes, got {len(seed)}."
+        )
+    return seed

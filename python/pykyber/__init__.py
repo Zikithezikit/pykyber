@@ -4,6 +4,15 @@
 
 
 
+from ._error import (
+    AlgorithmMismatchError,
+    DecapsulationError,
+    InvalidDecapsulationKeyError,
+    InvalidEncapsulationKeyError,
+    InvalidInputError,
+    RandomnessError,
+)
+from ._mlkem import ML_KEM_512, ML_KEM_768, ML_KEM_1024
 from ._kyber import (
     Kyber768,
     Kyber512,
@@ -14,7 +23,21 @@ from ._kyber import (
     _validate_keypair,
 )
 
-__all__ = ["Kyber512", "Kyber768", "Kyber1024", "KyberError"]
+__all__ = [
+    "Kyber512",
+    "Kyber768",
+    "Kyber1024",
+    "ML_KEM_512",
+    "ML_KEM_768",
+    "ML_KEM_1024",
+    "KyberError",
+    "AlgorithmMismatchError",
+    "DecapsulationError",
+    "InvalidDecapsulationKeyError",
+    "InvalidEncapsulationKeyError",
+    "InvalidInputError",
+    "RandomnessError",
+]
 
 from . import _pykyber
 
