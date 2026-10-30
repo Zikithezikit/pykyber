@@ -96,7 +96,8 @@ impl<const K: usize> PolyVec<K> {
             poly_frombytes(p, &bytes[i * KYBER_POLYBYTES..(i + 1) * KYBER_POLYBYTES]);
             for c in p.coeffs.iter_mut() {
                 // 12-bit input is below 2q, so one conditional subtraction
-                // reduces it. The data is public (an encapsulation key).
+                // reduces it. This is branch-free arithmetic on a sign mask, so it is also
+                // fine for dk_PKE in K-PKE.Decrypt, which is secret.
                 let t = *c - KYBER_Q as i16;
                 *c = t + ((t >> SIGN_SHIFT) & KYBER_Q as i16);
             }

@@ -31,6 +31,9 @@
 //! - Compress / Decompress for d = 1 (`poly_tomsg`), 4, 5 and 10 are exact
 //!   over all of Z_q, and Decompress for d = 11 is exact. `poly_tomsg` is
 //!   arithmetically right; see "Checked in release builds" below.
+//!   K-PKE does not call them: `compress::poly_compress` and `poly_decompress`
+//!   are generic over d and cover every width, since the d = 10 / 11 legacy loops
+//!   exist only inside the per-level polyvec functions.
 //! - `rej_uniform` (now `pub(crate)`), used by `sample::sample_ntt`.
 //!
 //! Not shared:
@@ -47,7 +50,7 @@
 //!   the pattern of CVE-2024-37880. rustc 1.95 did not turn it into a branch
 //!   on x86_64 or aarch64 (checked in release builds), but nothing guarantees
 //!   that for other compilers or flags, so ML-KEM needs its own version that
-//!   passes the bit through an optimization barrier.
+//!   passes the bit through an optimization barrier: `compress::poly_from_msg`.
 //! - `verify` / `cmov` (`verify.rs`): no optimization barrier and a
 //!   caller-supplied length. ML-KEM needs its own compare and select.
 //! - `poly_getnoise_*`: eta is hard-coded per function. Call the PRF and
@@ -66,6 +69,15 @@
 //! state. This is not the WP-8 gate: armv7 and i686 are not covered and the
 //! result holds for this toolchain only.
 //!
+//! K-PKE (WP-3), same toolchain, x86_64, objdump of the release test binary:
+//! `kpke::keygen`, `encrypt`, `decrypt`, `sample_noise` and `matrix_row` contain
+//! no division. Probes around `poly_from_msg`, `poly_compress` (d = 1, 10) and
+//! `poly_decompress` (d = 10) show conditional branches only on loop counters,
+//! output bounds and slice ends. `poly_from_msg` turns each message bit into a
+//! mask with `bt` / `sbb`, stores it to the stack through `black_box` and applies
+//! it with `and`. The `setcc` / `cmov` pairs in `decrypt` compare slice offsets
+//! (public). Neither armv7 nor i686 nor aarch64 was looked at for K-PKE.
+//!
 //! Known limit: the Keccak permutation spills round temporaries into its own
 //! stack frame (about 70 spill stores in a 0xf8-byte frame on x86_64), and
 //! zeroizing the state array cannot clear those. Closing that needs stack
@@ -76,6 +88,7 @@
 //! steps as the legacy code does.
 
 pub mod compress;
+pub mod kpke;
 pub mod params;
 pub mod polyvec;
 pub mod sample;
