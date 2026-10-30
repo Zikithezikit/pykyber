@@ -65,6 +65,9 @@ impl Keypair {
     }
 }
 
+/// Stands in for a generator on the seeded path, which draws no randomness. The
+/// KEM code asks only through `try_fill_bytes`, so if that ever changed it would
+/// get a `RandomBytesGeneration` error and not a panic.
 struct DummyRng {}
 impl CryptoRng for DummyRng {}
 impl RngCore for DummyRng {
@@ -75,7 +78,7 @@ impl RngCore for DummyRng {
         panic!()
     }
     fn try_fill_bytes(&mut self, _dest: &mut [u8]) -> Result<(), rand_core::Error> {
-        panic!()
+        Err(rand_core::Error::new("the seeded path draws no randomness"))
     }
     fn fill_bytes(&mut self, _dest: &mut [u8]) {
         panic!()
