@@ -6,3 +6,4 @@
 
 pub mod params;
 pub mod polyvec;
+pub mod sample;
