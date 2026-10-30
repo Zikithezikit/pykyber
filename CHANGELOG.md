@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Security pass over the legacy Kyber code (issue #18): the random bytes for `Kyber*` key generation and encapsulation now come from the operating system generator (`OsRng`) instead of `thread_rng()`, and a failure of that generator is raised as `RandomnessError` (a `KyberError`) instead of panicking or being retried with a weaker source. Seeded paths and all Kyber output are unchanged.
+- Behavior change, `Kyber512/768/1024.from_keys` (issue #18): it now raises `KyberError` when the public key is not the copy stored inside the secret key (a round-3 Kyber secret key is `sk_pke || pk || H(pk) || z`). Before, any public key and secret key of the right sizes were accepted, so `Kyber768.from_keys(a.public_key, b.secret_key)` built a keypair whose `decapsulate` silently returned a different secret than `encapsulate` had produced. A key pair that matches is accepted as before, and a wrong-size key keeps its existing size error. `ML_KEM_*.from_keys` is not changed.
 
 ## v2.0.0
 

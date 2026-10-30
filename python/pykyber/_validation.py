@@ -16,6 +16,31 @@ def _validate_pk(pk: bytes, expected_size: int, method_name: str) -> None:
         )
 
 
+def _validate_key_binding(
+    public_key: bytes,
+    secret_key: bytes,
+    secret_key_size: int,
+    pke_secret_key_size: int,
+    method_name: str,
+) -> None:
+    """Reject a public key that is not the copy embedded in the secret key.
+
+    A round-3 Kyber secret key is ``sk_pke || pk || H(pk) || z`` (``pk`` starts at
+    ``pke_secret_key_size``), so a pair of keys from different key pairs can be
+    detected. Both sides are public data, so a plain comparison is fine. A secret
+    key of the wrong size is left alone: it fails its size check when it is used.
+    """
+    if len(secret_key) != secret_key_size:
+        return
+    embedded = bytes(secret_key[pke_secret_key_size:pke_secret_key_size + len(public_key)])
+    if bytes(public_key) != embedded:
+        raise KyberError(
+            f"Invalid key pair for {method_name}: the public key does not match the "
+            f"public key stored inside the secret key. Use the public key and the "
+            f"secret key of the same key pair."
+        )
+
+
 def _validate_seed(seed: Optional[bytes], expected_size: int = 64) -> None:
     """Validate seed length."""
     if seed is not None:
