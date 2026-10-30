@@ -9,6 +9,49 @@ use super::verify::{cmov, verify};
 use rand_core::{CryptoRng, RngCore};
 use zeroize::{Zeroize, Zeroizing};
 
+/// Fails with `InvalidInput` unless `actual == expected`; lengths are public.
+fn check_len(param: &'static str, expected: usize, actual: usize) -> Result<(), KyberError> {
+    if actual != expected {
+        return Err(KyberError::invalid_input(param, expected, actual));
+    }
+    Ok(())
+}
+
+/// Length checks shared by the three key generation functions.
+fn check_keypair_args(
+    pk: &[u8],
+    sk: &[u8],
+    seed: Option<(&[u8], &[u8])>,
+    pk_len: usize,
+    sk_len: usize,
+) -> Result<(), KyberError> {
+    check_len("pk", pk_len, pk.len())?;
+    check_len("sk", sk_len, sk.len())?;
+    if let Some((d, z)) = seed {
+        check_len("seed d", KYBER_SYMBYTES, d.len())?;
+        check_len("seed z", KYBER_SYMBYTES, z.len())?;
+    }
+    Ok(())
+}
+
+/// Length checks shared by the three encapsulation functions.
+fn check_enc_args(
+    ct: &[u8],
+    ss: &[u8],
+    pk: &[u8],
+    seed: Option<&[u8]>,
+    ct_len: usize,
+    pk_len: usize,
+) -> Result<(), KyberError> {
+    check_len("ct", ct_len, ct.len())?;
+    check_len("ss", KYBER_SSBYTES, ss.len())?;
+    check_len("pk", pk_len, pk.len())?;
+    if let Some(m) = seed {
+        check_len("seed", KYBER_SYMBYTES, m.len())?;
+    }
+    Ok(())
+}
+
 pub fn crypto_kem_keypair<R>(
     pk: &mut [u8],
     sk: &mut [u8],
@@ -18,6 +61,8 @@ pub fn crypto_kem_keypair<R>(
 where
     R: RngCore + CryptoRng,
 {
+    check_keypair_args(pk, sk, _seed, KYBER_PUBLICKEYBYTES, KYBER_SECRETKEYBYTES)?;
+
     const PK_START: usize = KYBER_SECRETKEYBYTES - (2 * KYBER_SYMBYTES);
     const SK_START: usize = KYBER_SECRETKEYBYTES - KYBER_SYMBYTES;
     const END: usize = KYBER_INDCPA_PUBLICKEYBYTES + KYBER_INDCPA_SECRETKEYBYTES;
@@ -52,6 +97,15 @@ pub fn crypto_kem_enc<R>(
 where
     R: RngCore + CryptoRng,
 {
+    check_enc_args(
+        ct,
+        ss,
+        pk,
+        _seed,
+        KYBER_CIPHERTEXTBYTES,
+        KYBER_PUBLICKEYBYTES,
+    )?;
+
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
     let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
@@ -132,6 +186,14 @@ pub fn crypto_kem_keypair_512<R>(
 where
     R: RngCore + CryptoRng,
 {
+    check_keypair_args(
+        pk,
+        sk,
+        _seed,
+        KYBER_512_PUBLICKEYBYTES,
+        KYBER_512_SECRETKEYBYTES,
+    )?;
+
     const PK_START: usize = KYBER_512_SECRETKEYBYTES - (2 * KYBER_SYMBYTES);
     const SK_START: usize = KYBER_512_SECRETKEYBYTES - KYBER_SYMBYTES;
     const END: usize = KYBER_512_INDCPA_PUBLICKEYBYTES + KYBER_512_INDCPA_SECRETKEYBYTES;
@@ -167,6 +229,15 @@ pub fn crypto_kem_enc_512<R>(
 where
     R: RngCore + CryptoRng,
 {
+    check_enc_args(
+        ct,
+        ss,
+        pk,
+        _seed,
+        KYBER_512_CIPHERTEXTBYTES,
+        KYBER_512_PUBLICKEYBYTES,
+    )?;
+
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
     let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
@@ -247,6 +318,14 @@ pub fn crypto_kem_keypair_1024<R>(
 where
     R: RngCore + CryptoRng,
 {
+    check_keypair_args(
+        pk,
+        sk,
+        _seed,
+        KYBER_1024_PUBLICKEYBYTES,
+        KYBER_1024_SECRETKEYBYTES,
+    )?;
+
     const PK_START: usize = KYBER_1024_SECRETKEYBYTES - (2 * KYBER_SYMBYTES);
     const SK_START: usize = KYBER_1024_SECRETKEYBYTES - KYBER_SYMBYTES;
     const END: usize = KYBER_1024_INDCPA_PUBLICKEYBYTES + KYBER_1024_INDCPA_SECRETKEYBYTES;
@@ -282,6 +361,15 @@ pub fn crypto_kem_enc_1024<R>(
 where
     R: RngCore + CryptoRng,
 {
+    check_enc_args(
+        ct,
+        ss,
+        pk,
+        _seed,
+        KYBER_1024_CIPHERTEXTBYTES,
+        KYBER_1024_PUBLICKEYBYTES,
+    )?;
+
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
     let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
