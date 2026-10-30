@@ -87,6 +87,8 @@
 //! panic on overflow in debug builds, wrap in release), so reduce between
 //! steps as the legacy code does.
 
+#[cfg(test)]
+mod acvp_tests;
 pub mod compress;
 pub mod kpke;
 pub mod params;
