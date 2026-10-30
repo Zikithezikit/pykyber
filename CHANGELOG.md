@@ -3,7 +3,6 @@
 ## Unreleased
 
 - 2.0 development: repo setup (issue #4), including CI on pushes to `dev-v2`, new `CONTRIBUTING.md`, root `SECURITY.md` (vulnerability-reporting policy + migrated security findings log), PR and issue templates, `CODEOWNERS` routing `src/` and `SECURITY.md` to the maintainer for review, and PR-description rules for agents in AGENTS.md (plain prose, ASCII-checked post text, REST fallback).
-- Legacy freeze (issue #6): golden vectors capture the byte output of pykyber v1.0.5 (append-only `tests/vectors/legacy-kyber-v1.0.5.json`, with the generator); Rust and Python tests fail on any change to seeded keygen, seeded encapsulation, or decapsulation output.
 
 ## v1.0.5
 
