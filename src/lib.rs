@@ -1,4 +1,8 @@
 pub mod kyber;
+// ML-KEM is not wired into the Python module or the public Rust API yet (WP-3,
+// open decision D4). Drop the allow once something uses it.
+#[allow(dead_code)]
+pub(crate) mod mlkem;
 
 use kyber::{
     crypto_kem_dec_1024, crypto_kem_dec_512, crypto_kem_enc_1024, crypto_kem_enc_512,
