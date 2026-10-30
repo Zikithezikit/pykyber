@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Security pass over the legacy Kyber code (issue #18): the random bytes for `Kyber*` key generation and encapsulation now come from the operating system generator (`OsRng`) instead of `thread_rng()`, and a failure of that generator is raised as `RandomnessError` (a `KyberError`) instead of panicking or being retried with a weaker source. Seeded paths and all Kyber output are unchanged.
+
 ## v2.0.0
 
 Planned release; not tagged or published yet. Adds ML-KEM (FIPS 203) beside the legacy Kyber classes, which are deprecated. Kyber output is unchanged from 1.0.5. Kyber (round 3) and ML-KEM are not interoperable, so both sides of a connection must switch; see `docs/migration.md`.

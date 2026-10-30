@@ -8,7 +8,7 @@ use super::symmetric::{
     hash_sha3_512, xof_absorb_bytes, xof_squeeze_blocks, XofState, XOF_BLOCKBYTES,
 };
 use rand_core::{CryptoRng, RngCore};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 fn pack_pk(r: &mut [u8], pk: &mut Polyvec, seed: &[u8]) {
     const END: usize = KYBER_SYMBYTES + KYBER_POLYVECBYTES;
@@ -115,15 +115,16 @@ where
     let (mut e, mut pkpv, mut skpv) = (Polyvec::new(), Polyvec::new(), Polyvec::new());
     let mut nonce = 0u8;
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
+    let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
 
     if let Some(s) = _seed {
         randbuf[..KYBER_SYMBYTES].copy_from_slice(s.0);
     } else {
-        _rng.fill_bytes(&mut randbuf[..KYBER_SYMBYTES]);
+        _rng.try_fill_bytes(&mut randbuf[..KYBER_SYMBYTES])
+            .map_err(|_| KyberError::RandomBytesGeneration)?;
     }
 
-    hash_sha3_512(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_512(&mut buf, &randbuf[..], KYBER_SYMBYTES);
 
     let (publicseed, noiseseed) = buf.split_at(KYBER_SYMBYTES);
     gen_a(&mut a, publicseed);
@@ -297,15 +298,16 @@ where
     let (mut e, mut pkpv, mut skpv) = (Polyvec512::new(), Polyvec512::new(), Polyvec512::new());
     let mut nonce = 0u8;
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
+    let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
 
     if let Some(s) = _seed {
         randbuf[..KYBER_SYMBYTES].copy_from_slice(s.0);
     } else {
-        _rng.fill_bytes(&mut randbuf[..KYBER_SYMBYTES]);
+        _rng.try_fill_bytes(&mut randbuf[..KYBER_SYMBYTES])
+            .map_err(|_| KyberError::RandomBytesGeneration)?;
     }
 
-    hash_sha3_512(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_512(&mut buf, &randbuf[..], KYBER_SYMBYTES);
 
     let (publicseed, noiseseed) = buf.split_at(KYBER_SYMBYTES);
     gen_a_512(&mut a, publicseed);
@@ -481,15 +483,16 @@ where
     let (mut e, mut pkpv, mut skpv) = (Polyvec1024::new(), Polyvec1024::new(), Polyvec1024::new());
     let mut nonce = 0u8;
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
+    let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
 
     if let Some(s) = _seed {
         randbuf[..KYBER_SYMBYTES].copy_from_slice(s.0);
     } else {
-        _rng.fill_bytes(&mut randbuf[..KYBER_SYMBYTES]);
+        _rng.try_fill_bytes(&mut randbuf[..KYBER_SYMBYTES])
+            .map_err(|_| KyberError::RandomBytesGeneration)?;
     }
 
-    hash_sha3_512(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_512(&mut buf, &randbuf[..], KYBER_SYMBYTES);
 
     let (publicseed, noiseseed) = buf.split_at(KYBER_SYMBYTES);
     gen_a_1024(&mut a, publicseed);

@@ -31,7 +31,7 @@ fn error_class(error: &KyberError) -> &'static str {
     }
 }
 
-fn to_py_err(py: Python<'_>, error: KyberError) -> PyErr {
+pub(crate) fn to_py_err(py: Python<'_>, error: KyberError) -> PyErr {
     py.import(ERROR_MODULE)
         .and_then(|module| module.getattr(error_class(&error)))
         .and_then(|class| class.call1((error.to_string(),)))

@@ -1570,3 +1570,34 @@ def test_keypair_as_tuple_in_function():
     decrypted = pykyber.Kyber768.decapsulate(ciphertext, sk)
     
     assert shared_secret == decrypted
+
+
+class TestRandomnessFailure:
+    """A failing OS generator reaches the caller as RandomnessError, a KyberError."""
+
+    @staticmethod
+    def _failing(*_args):
+        raise pykyber.RandomnessError("Random bytes generation failed")
+
+    def test_keypair_wrapper_keeps_randomness_error(self):
+        from pykyber._validation import _validate_keypair
+
+        with pytest.raises(pykyber.RandomnessError) as excinfo:
+            _validate_keypair(self._failing)()
+        assert isinstance(excinfo.value, pykyber.KyberError)
+
+    def test_encapsulate_wrapper_keeps_randomness_error(self):
+        from pykyber._validation import _validate_encapsulate
+
+        with pytest.raises(pykyber.RandomnessError):
+            _validate_encapsulate(self._failing, 1184, "Kyber768")(bytes(1184))
+
+    def test_other_errors_are_still_wrapped(self):
+        from pykyber._validation import _validate_keypair
+
+        def boom(_seed):
+            raise ValueError("boom")
+
+        with pytest.raises(pykyber.KyberError) as excinfo:
+            _validate_keypair(boom)()
+        assert not isinstance(excinfo.value, pykyber.RandomnessError)
