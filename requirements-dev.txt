@@ -1,0 +1,4 @@
+# Development and CI tooling only. The extension has no runtime dependencies.
+# pytest 8.x is the last line that still supports Python 3.8.
+maturin>=1.12,<2.0
+pytest>=7,<9
