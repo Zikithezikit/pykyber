@@ -4,6 +4,7 @@
 //! missing `H(c)` in the KDF, so the KEM layer is separate code. The
 //! primitives below it are shared with `crate::kyber` where verified.
 
+pub mod compress;
 pub mod params;
 pub mod polyvec;
 pub mod sample;
