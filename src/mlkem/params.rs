@@ -6,7 +6,9 @@
 //! functions are slices or `Vec`s sized from them; only `[Poly; K]` is a
 //! plain array.
 
-use crate::kyber::params::{KYBER_N, KYBER_POLYBYTES, KYBER_SSBYTES, KYBER_SYMBYTES};
+#[cfg(test)]
+use crate::kyber::params::KYBER_SSBYTES;
+use crate::kyber::params::{KYBER_N, KYBER_POLYBYTES, KYBER_SYMBYTES};
 
 /// Parameter set selected by `K`. Using `ParamSet<K>` for a `K` outside
 /// {2, 3, 4} fails at compile time.
@@ -81,15 +83,18 @@ impl<const K: usize> ParamSet<K> {
     pub const DK_BYTES: usize = Self::DK_PKE_BYTES + Self::EK_BYTES + 2 * KYBER_SYMBYTES;
     /// Ciphertext: c1 (k polynomials of du bits) || c2 (dv bits).
     pub const CT_BYTES: usize = K * Self::POLY_COMPRESSED_U_BYTES + Self::POLY_COMPRESSED_V_BYTES;
-    /// Shared secret.
+    /// Shared secret. Only the parameter-table test reads it.
+    #[cfg(test)]
     pub const SS_BYTES: usize = KYBER_SSBYTES;
     /// Bytes of one compressed polynomial of u.
     pub const POLY_COMPRESSED_U_BYTES: usize = encoded_bytes(Self::DU);
     /// Bytes of the compressed polynomial v.
     pub const POLY_COMPRESSED_V_BYTES: usize = encoded_bytes(Self::DV);
-    /// Bytes drawn from the PRF for one eta1 noise polynomial.
+    /// Bytes drawn from the PRF for one eta1 noise polynomial (parameter-table test only).
+    #[cfg(test)]
     pub const NOISE1_BYTES: usize = prf_bytes(Self::ETA1);
-    /// Bytes drawn from the PRF for one eta2 noise polynomial.
+    /// Bytes drawn from the PRF for one eta2 noise polynomial (parameter-table test only).
+    #[cfg(test)]
     pub const NOISE2_BYTES: usize = prf_bytes(Self::ETA2);
 }
 
