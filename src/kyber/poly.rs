@@ -15,6 +15,7 @@ use super::params::*;
 use super::reduce::{barrett_reduce, montgomery_reduce};
 use super::symmetric::shake256_prf_expand;
 
+use core::hint::black_box;
 use zeroize::Zeroize;
 
 #[derive(Clone, Zeroize)]
@@ -210,11 +211,19 @@ pub fn poly_sub(r: &mut Poly, a: &Poly) {
     }
 }
 
+/// Expands each message bit to 0 or (q + 1) / 2.
+///
+/// The mask `-(bit)` is the pattern behind CVE-2024-37880 ("Clangover"), where
+/// the compiler turned it into a branch on the message bit. `black_box` is an
+/// optimization barrier: the compiler may not assume what the bit or the mask
+/// is, so it cannot rewrite the mask into a conditional. It is best effort, not a
+/// guarantee (see SECURITY.md).
 pub fn poly_frommsg(r: &mut Poly, msg: &[u8]) {
     let mut mask;
     for i in 0..KYBER_N / 8 {
         for j in 0..8 {
-            mask = ((msg[i] as u16 >> j) & 1).wrapping_neg();
+            let bit = black_box((msg[i] as u16 >> j) & 1);
+            mask = black_box(bit.wrapping_neg());
             r.coeffs[8 * i + j] = (mask & KYBER_Q.div_ceil(2) as u16) as i16;
         }
     }
