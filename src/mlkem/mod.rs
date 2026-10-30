@@ -89,7 +89,9 @@
 
 #[cfg(test)]
 mod acvp_tests;
+pub mod check;
 pub mod compress;
+pub mod ct;
 pub mod kpke;
 pub mod params;
 pub mod polyvec;
