@@ -57,6 +57,8 @@ jobs:
           echo "$RUNNER_TEMP/venv/$BIN" >> "$GITHUB_PATH"
       - name: Install dev dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Fetch external test vectors
+        run: python scripts/fetch_vectors.py
       - name: cargo fmt
         run: cargo fmt --check
       - name: cargo clippy
