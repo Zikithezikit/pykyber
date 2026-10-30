@@ -1,8 +1,6 @@
 pub mod kyber;
-// ML-KEM is not wired into the Python module or the public Rust API yet (WP-3,
-// open decision D4). Drop the allow once something uses it.
-#[allow(dead_code)]
 pub(crate) mod mlkem;
+mod pymlkem;
 
 use kyber::{
     crypto_kem_dec_1024, crypto_kem_dec_512, crypto_kem_enc_1024, crypto_kem_enc_512,
@@ -155,6 +153,13 @@ fn decapsulate_key_1024(ct: &[u8], sk: &[u8]) -> PyResult<Vec<u8>> {
 #[pymodule]
 mod _pykyber {
     use pyo3::prelude::*;
+
+    #[pymodule_export]
+    use super::pymlkem::{
+        _mlkem_1024_decaps, _mlkem_1024_encaps, _mlkem_1024_keygen, _mlkem_512_decaps,
+        _mlkem_512_encaps, _mlkem_512_keygen, _mlkem_768_decaps, _mlkem_768_encaps,
+        _mlkem_768_keygen,
+    };
 
     #[pyfunction]
     pub fn _generate_keypair(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
