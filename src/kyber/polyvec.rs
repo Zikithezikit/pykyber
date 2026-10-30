@@ -1,4 +1,6 @@
 #![allow(clippy::precedence)]
+// Index loops and `+ 0` offsets follow the reference C code; see poly.rs.
+#![allow(clippy::needless_range_loop, clippy::identity_op)]
 use super::params::*;
 use super::poly::*;
 

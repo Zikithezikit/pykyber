@@ -72,6 +72,7 @@ pub fn ntt_inverse(coeffs: &mut [i16]) {
         }
         layer_length <<= 1;
     }
+    #[allow(clippy::needless_range_loop)] // reference-C loop shape, see poly.rs
     for j in 0..256 {
         coeffs[j] = field_multiply(coeffs[j], F);
     }
