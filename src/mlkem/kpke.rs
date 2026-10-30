@@ -99,13 +99,21 @@ pub(crate) fn keygen<const K: usize>(d: &Seed) -> (Vec<u8>, Zeroizing<Vec<u8>>) 
     rho.copy_from_slice(&g_output[..SEED_BYTES]);
     let mut sigma = Zeroizing::new([0u8; SEED_BYTES]);
     sigma.copy_from_slice(&g_output[SEED_BYTES..]);
+    keygen_expanded::<K>(&rho, &sigma)
+}
 
+/// Algorithm 13 from step 2 on, for a given `(rho, sigma)`. Split from `keygen`
+/// so the CCTV tests can feed the `G(d)` derivation of the pre-final standard.
+pub(crate) fn keygen_expanded<const K: usize>(
+    rho: &Seed,
+    sigma: &Seed,
+) -> (Vec<u8>, Zeroizing<Vec<u8>>) {
     // Steps 2, 8-15: s and e from sigma, nonces 0..K and K..2K.
     let mut nonce = 0u8;
     let mut s = PolyVec::<K>::new();
     let mut e = PolyVec::<K>::new();
-    sample_noise_vec(&mut s, &sigma, &mut nonce, ParamSet::<K>::ETA1);
-    sample_noise_vec(&mut e, &sigma, &mut nonce, ParamSet::<K>::ETA1);
+    sample_noise_vec(&mut s, sigma, &mut nonce, ParamSet::<K>::ETA1);
+    sample_noise_vec(&mut e, sigma, &mut nonce, ParamSet::<K>::ETA1);
 
     // Steps 16-17.
     s.ntt();
@@ -114,7 +122,7 @@ pub(crate) fn keygen<const K: usize>(d: &Seed) -> (Vec<u8>, Zeroizing<Vec<u8>>) 
     // Step 18: t = A s + e. The product carries 2^-16; poly_tomont removes it.
     let mut t = PolyVec::<K>::new();
     for (i, ti) in t.vec.iter_mut().enumerate() {
-        PolyVec::basemul_acc(ti, &matrix_row::<K>(&rho, i, false), &s);
+        PolyVec::basemul_acc(ti, &matrix_row::<K>(rho, i, false), &s);
         poly_tomont(ti);
     }
     t.add(&e);
@@ -124,7 +132,7 @@ pub(crate) fn keygen<const K: usize>(d: &Seed) -> (Vec<u8>, Zeroizing<Vec<u8>>) 
     let mut ek = vec![0u8; ParamSet::<K>::EK_BYTES];
     let (ek_t, ek_rho) = ek.split_at_mut(ParamSet::<K>::DK_PKE_BYTES);
     t.to_bytes(ek_t);
-    ek_rho.copy_from_slice(&rho);
+    ek_rho.copy_from_slice(rho);
     let mut dk = Zeroizing::new(vec![0u8; ParamSet::<K>::DK_PKE_BYTES]);
     s.to_bytes(&mut dk);
     (ek, dk)
