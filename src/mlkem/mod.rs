@@ -94,6 +94,8 @@ mod cctv_tests;
 pub mod check;
 pub mod compress;
 pub mod ct;
+#[cfg(test)]
+mod differential_tests;
 pub mod kem;
 pub mod kpke;
 pub mod params;
