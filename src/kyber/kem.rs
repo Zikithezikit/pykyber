@@ -97,29 +97,28 @@ pub fn crypto_kem_dec(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), KyberEr
         return Err(KyberError::invalid_input("ss", KYBER_SSBYTES, ss.len()));
     }
 
-    let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut kr = [0u8; 2 * KYBER_SYMBYTES];
-    let mut cmp = [0u8; KYBER_CIPHERTEXTBYTES];
+    let mut buf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
+    let mut kr = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
+    let mut cmp = Zeroizing::new([0u8; KYBER_CIPHERTEXTBYTES]);
     let mut pk = [0u8; KYBER_INDCPA_PUBLICKEYBYTES];
 
     pk.copy_from_slice(&sk[KYBER_INDCPA_SECRETKEYBYTES..][..KYBER_INDCPA_PUBLICKEYBYTES]);
 
-    indcpa_dec(&mut buf, ct, sk);
+    indcpa_dec(&mut buf[..], ct, sk);
 
     const START: usize = KYBER_SECRETKEYBYTES - 2 * KYBER_SYMBYTES;
     const END: usize = KYBER_SECRETKEYBYTES - KYBER_SYMBYTES;
     buf[KYBER_SYMBYTES..].copy_from_slice(&sk[START..END]);
-    hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
+    hash_sha3_512(&mut kr[..], &buf[..], 2 * KYBER_SYMBYTES);
 
-    indcpa_enc(&mut cmp, &buf, &pk, &kr[KYBER_SYMBYTES..]);
-    let fail = verify(ct, &cmp, KYBER_CIPHERTEXTBYTES);
+    indcpa_enc(&mut cmp[..], &buf[..], &pk, &kr[KYBER_SYMBYTES..]);
+    // The reject flag is secret: it never leaves this function and is wiped on drop.
+    let fail = Zeroizing::new(verify(ct, &cmp[..], KYBER_CIPHERTEXTBYTES));
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_CIPHERTEXTBYTES);
-    cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
-    shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    cmov(&mut kr[..], &sk[END..], KYBER_SYMBYTES, *fail);
+    shake256_kdf(ss, &kr[..], 2 * KYBER_SYMBYTES);
 
-    buf.zeroize();
-    kr.zeroize();
-    cmp.zeroize();
+    // buf (m'), kr, cmp and the flag are `Zeroizing`: wiped on every exit, unwinding included.
     pk.zeroize();
     Ok(())
 }
@@ -213,29 +212,28 @@ pub fn crypto_kem_dec_512(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), Kyb
         return Err(KyberError::invalid_input("ss", KYBER_SSBYTES, ss.len()));
     }
 
-    let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut kr = [0u8; 2 * KYBER_SYMBYTES];
-    let mut cmp = [0u8; KYBER_512_CIPHERTEXTBYTES];
+    let mut buf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
+    let mut kr = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
+    let mut cmp = Zeroizing::new([0u8; KYBER_512_CIPHERTEXTBYTES]);
     let mut pk = [0u8; KYBER_512_INDCPA_PUBLICKEYBYTES];
 
     pk.copy_from_slice(&sk[KYBER_512_INDCPA_SECRETKEYBYTES..][..KYBER_512_INDCPA_PUBLICKEYBYTES]);
 
-    indcpa_dec_512(&mut buf, ct, sk);
+    indcpa_dec_512(&mut buf[..], ct, sk);
 
     const START: usize = KYBER_512_SECRETKEYBYTES - 2 * KYBER_SYMBYTES;
     const END: usize = KYBER_512_SECRETKEYBYTES - KYBER_SYMBYTES;
     buf[KYBER_SYMBYTES..].copy_from_slice(&sk[START..END]);
-    hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
+    hash_sha3_512(&mut kr[..], &buf[..], 2 * KYBER_SYMBYTES);
 
-    indcpa_enc_512(&mut cmp, &buf, &pk, &kr[KYBER_SYMBYTES..]);
-    let fail = verify(ct, &cmp, KYBER_512_CIPHERTEXTBYTES);
+    indcpa_enc_512(&mut cmp[..], &buf[..], &pk, &kr[KYBER_SYMBYTES..]);
+    // The reject flag is secret: it never leaves this function and is wiped on drop.
+    let fail = Zeroizing::new(verify(ct, &cmp[..], KYBER_512_CIPHERTEXTBYTES));
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_512_CIPHERTEXTBYTES);
-    cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
-    shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    cmov(&mut kr[..], &sk[END..], KYBER_SYMBYTES, *fail);
+    shake256_kdf(ss, &kr[..], 2 * KYBER_SYMBYTES);
 
-    buf.zeroize();
-    kr.zeroize();
-    cmp.zeroize();
+    // buf (m'), kr, cmp and the flag are `Zeroizing`: wiped on every exit, unwinding included.
     pk.zeroize();
     Ok(())
 }
@@ -329,29 +327,28 @@ pub fn crypto_kem_dec_1024(ss: &mut [u8], ct: &[u8], sk: &[u8]) -> Result<(), Ky
         return Err(KyberError::invalid_input("ss", KYBER_SSBYTES, ss.len()));
     }
 
-    let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut kr = [0u8; 2 * KYBER_SYMBYTES];
-    let mut cmp = [0u8; KYBER_1024_CIPHERTEXTBYTES];
+    let mut buf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
+    let mut kr = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
+    let mut cmp = Zeroizing::new([0u8; KYBER_1024_CIPHERTEXTBYTES]);
     let mut pk = [0u8; KYBER_1024_INDCPA_PUBLICKEYBYTES];
 
     pk.copy_from_slice(&sk[KYBER_1024_INDCPA_SECRETKEYBYTES..][..KYBER_1024_INDCPA_PUBLICKEYBYTES]);
 
-    indcpa_dec_1024(&mut buf, ct, sk);
+    indcpa_dec_1024(&mut buf[..], ct, sk);
 
     const START: usize = KYBER_1024_SECRETKEYBYTES - 2 * KYBER_SYMBYTES;
     const END: usize = KYBER_1024_SECRETKEYBYTES - KYBER_SYMBYTES;
     buf[KYBER_SYMBYTES..].copy_from_slice(&sk[START..END]);
-    hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
+    hash_sha3_512(&mut kr[..], &buf[..], 2 * KYBER_SYMBYTES);
 
-    indcpa_enc_1024(&mut cmp, &buf, &pk, &kr[KYBER_SYMBYTES..]);
-    let fail = verify(ct, &cmp, KYBER_1024_CIPHERTEXTBYTES);
+    indcpa_enc_1024(&mut cmp[..], &buf[..], &pk, &kr[KYBER_SYMBYTES..]);
+    // The reject flag is secret: it never leaves this function and is wiped on drop.
+    let fail = Zeroizing::new(verify(ct, &cmp[..], KYBER_1024_CIPHERTEXTBYTES));
     hash_sha3_256(&mut kr[KYBER_SYMBYTES..], ct, KYBER_1024_CIPHERTEXTBYTES);
-    cmov(&mut kr, &sk[END..], KYBER_SYMBYTES, fail);
-    shake256_kdf(ss, &kr, 2 * KYBER_SYMBYTES);
+    cmov(&mut kr[..], &sk[END..], KYBER_SYMBYTES, *fail);
+    shake256_kdf(ss, &kr[..], 2 * KYBER_SYMBYTES);
 
-    buf.zeroize();
-    kr.zeroize();
-    cmp.zeroize();
+    // buf (m'), kr, cmp and the flag are `Zeroizing`: wiped on every exit, unwinding included.
     pk.zeroize();
     Ok(())
 }
