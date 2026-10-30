@@ -51,8 +51,9 @@
 //!   on x86_64 or aarch64 (checked in release builds), but nothing guarantees
 //!   that for other compilers or flags, so ML-KEM needs its own version that
 //!   passes the bit through an optimization barrier: `compress::poly_from_msg`.
-//! - `verify` / `cmov` (`verify.rs`): no optimization barrier and a
-//!   caller-supplied length. ML-KEM needs its own compare and select.
+//! - `verify` / `cmov` (`verify.rs`): a caller-supplied length (the legacy code
+//!   has had an optimization barrier here since the WP-9 pass). ML-KEM keeps
+//!   its own compare and select.
 //! - `poly_getnoise_*`: eta is hard-coded per function. Call the PRF and
 //!   `cbd2` / `cbd3` with `ParamSet::ETA1` / `ETA2` instead.
 //! - `gen_matrix*`, `indcpa_*`, `crypto_kem_*`, the `Polyvec{512,768,1024}`
