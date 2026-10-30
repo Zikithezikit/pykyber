@@ -105,6 +105,34 @@ jobs:
           cp scripts/check.sh "$RUNNER_TEMP/check.sh"
           git rebase --exec "bash $RUNNER_TEMP/check.sh" "origin/$BASE_REF"
 
+  # WP-8 / issue #16: disassemble the release build for the targets we ship and
+  # look for division and for conditional branches nobody has reviewed. The
+  # toolchain is pinned on purpose: the reviewed branch counts in
+  # scripts/asm_check_allowlist.json belong to one compiler, and bumping it is
+  # a decision that comes with a new run of the script (see SECURITY.md). It is
+  # deliberately not part of scripts/check.sh, so it does not slow down the
+  # per-commit gate. The statistical timing test (scripts/timing_decaps.py) is
+  # a manual step: shared runners are too noisy for it.
+  asm-check:
+    name: release assembly check
+    runs-on: ubuntu-latest
+    env:
+      ASM_CHECK_TOOLCHAIN: '1.95.0'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install Rust toolchain
+        run: >
+          rustup toolchain install "$ASM_CHECK_TOOLCHAIN" --profile minimal --no-self-update
+          --component llvm-tools
+          --target aarch64-unknown-linux-gnu
+          --target i686-unknown-linux-gnu
+          --target armv7-unknown-linux-gnueabihf
+      - name: Check the release assembly
+        run: python scripts/asm_check.py --toolchain "$ASM_CHECK_TOOLCHAIN"
+
   linux:
     runs-on: ${{ matrix.platform.runner }}
     strategy:
