@@ -16,7 +16,7 @@ use super::reduce::{barrett_reduce, montgomery_reduce};
 use super::symmetric::shake256_prf_expand;
 
 use core::hint::black_box;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 #[derive(Clone, Zeroize)]
 #[zeroize(drop)]
@@ -133,30 +133,34 @@ pub fn poly_frombytes(r: &mut Poly, a: &[u8]) {
 
 pub fn poly_getnoise_eta1(r: &mut Poly, seed: &[u8], nonce: u8) {
     const LENGTH: usize = KYBER_ETA1 * KYBER_N / 4;
-    let mut buf = [0u8; LENGTH];
-    shake256_prf_expand(&mut buf, LENGTH, seed, nonce);
-    poly_cbd_eta1(r, &buf);
+    // The PRF output is the secret noise (the key in key generation, r in encryption).
+    let mut buf = Zeroizing::new([0u8; LENGTH]);
+    shake256_prf_expand(&mut buf[..], LENGTH, seed, nonce);
+    poly_cbd_eta1(r, &buf[..]);
 }
 
 pub fn poly_getnoise_eta1_512(r: &mut Poly, seed: &[u8], nonce: u8) {
     const LENGTH: usize = KYBER_512_ETA1 * KYBER_N / 4;
-    let mut buf = [0u8; LENGTH];
-    shake256_prf_expand(&mut buf, LENGTH, seed, nonce);
-    poly_cbd_eta1_512(r, &buf);
+    // The PRF output is the secret noise (the key in key generation, r in encryption).
+    let mut buf = Zeroizing::new([0u8; LENGTH]);
+    shake256_prf_expand(&mut buf[..], LENGTH, seed, nonce);
+    poly_cbd_eta1_512(r, &buf[..]);
 }
 
 pub fn poly_getnoise_eta2(r: &mut Poly, seed: &[u8], nonce: u8) {
     const LENGTH: usize = KYBER_ETA2 * KYBER_N / 4;
-    let mut buf = [0u8; LENGTH];
-    shake256_prf_expand(&mut buf, LENGTH, seed, nonce);
-    poly_cbd_eta2(r, &buf);
+    // The PRF output is the secret noise (the key in key generation, r in encryption).
+    let mut buf = Zeroizing::new([0u8; LENGTH]);
+    shake256_prf_expand(&mut buf[..], LENGTH, seed, nonce);
+    poly_cbd_eta2(r, &buf[..]);
 }
 
 pub fn poly_getnoise_eta2_512(r: &mut Poly, seed: &[u8], nonce: u8) {
     const LENGTH: usize = KYBER_512_ETA2 * KYBER_N / 4;
-    let mut buf = [0u8; LENGTH];
-    shake256_prf_expand(&mut buf, LENGTH, seed, nonce);
-    poly_cbd_eta2(r, &buf);
+    // The PRF output is the secret noise (the key in key generation, r in encryption).
+    let mut buf = Zeroizing::new([0u8; LENGTH]);
+    shake256_prf_expand(&mut buf[..], LENGTH, seed, nonce);
+    poly_cbd_eta2(r, &buf[..]);
 }
 
 pub fn poly_ntt(r: &mut Poly) {
