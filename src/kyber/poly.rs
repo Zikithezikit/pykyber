@@ -1,3 +1,12 @@
+// These loops and `+ 0` / `* 1` offsets mirror the reference C layout of the
+// round-3 Kyber code line for line. Rewriting them (iterators, dropped
+// no-op terms) would touch the hot path for no gain, so the lints are
+// allowed here instead.
+#![allow(
+    clippy::needless_range_loop,
+    clippy::identity_op,
+    clippy::explicit_counter_loop
+)]
 use super::cbd::poly_cbd_eta1;
 use super::cbd::poly_cbd_eta1_512;
 use super::cbd::poly_cbd_eta2;
@@ -206,7 +215,7 @@ pub fn poly_frommsg(r: &mut Poly, msg: &[u8]) {
     for i in 0..KYBER_N / 8 {
         for j in 0..8 {
             mask = ((msg[i] as u16 >> j) & 1).wrapping_neg();
-            r.coeffs[8 * i + j] = (mask & ((KYBER_Q + 1) / 2) as u16) as i16;
+            r.coeffs[8 * i + j] = (mask & KYBER_Q.div_ceil(2) as u16) as i16;
         }
     }
 }

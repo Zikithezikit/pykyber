@@ -15,6 +15,12 @@ pub struct KeccakState {
     pub pos: usize,
 }
 
+impl Default for KeccakState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KeccakState {
     pub fn new() -> Self {
         KeccakState {
@@ -32,7 +38,7 @@ impl KeccakState {
 /// Rotate left operation for 64-bit values.
 /// Rotates `value` left by `offset` bits.
 fn rotate_left(value: u64, offset: u64) -> u64 {
-    (value << offset) | (value >> (64 - offset))
+    value.rotate_left(offset as u32)
 }
 
 /// Load 8 bytes from little-endian byte array into a 64-bit unsigned integer.
@@ -367,7 +373,7 @@ pub fn sha3_512(h: &mut [u8], input: &[u8], inlen: usize) {
 }
 
 fn keccak_finalize(s: &mut [u64], pos: usize, r: usize, p: u8) {
-    s[pos / 8] ^= (p as u64) << 8 * (pos % 8);
+    s[pos / 8] ^= (p as u64) << (8 * (pos % 8));
     s[r / 8 - 1] ^= 1u64 << 63;
 }
 
@@ -385,9 +391,9 @@ pub fn keccak_absorb_once(s: &mut [u64], r: usize, input: &[u8], mut inlen: usiz
     }
 
     for i in 0..inlen {
-        s[i / 8] ^= (input[idx + i] as u64) << 8 * (i % 8);
+        s[i / 8] ^= (input[idx + i] as u64) << (8 * (i % 8));
     }
-    s[inlen / 8] ^= (p as u64) << 8 * (inlen % 8);
+    s[inlen / 8] ^= (p as u64) << (8 * (inlen % 8));
     s[(r - 1) / 8] ^= 1u64 << 63;
 }
 
@@ -406,7 +412,10 @@ fn keccak_squeeze(
         }
         let mut i = pos;
         while i < r && outlen > 0 {
-            if outlen >= 8 && i % 8 == 0 && i + 8 <= r {
+            // `is_multiple_of` needs Rust 1.89; no MSRV is declared, so keep `%`.
+            #[allow(clippy::manual_is_multiple_of)]
+            let aligned = i % 8 == 0;
+            if outlen >= 8 && aligned && i + 8 <= r {
                 store_u64(&mut out[idx..], s[i / 8]);
                 idx += 8;
                 outlen -= 8;
