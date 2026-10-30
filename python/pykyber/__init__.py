@@ -12,6 +12,7 @@ from ._error import (
     InvalidInputError,
     RandomnessError,
 )
+from ._deprecation import KyberDeprecationWarning
 from ._mlkem import ML_KEM_512, ML_KEM_768, ML_KEM_1024
 from ._kyber import (
     Kyber768,
@@ -31,6 +32,7 @@ __all__ = [
     "ML_KEM_768",
     "ML_KEM_1024",
     "KyberError",
+    "KyberDeprecationWarning",
     "AlgorithmMismatchError",
     "DecapsulationError",
     "InvalidDecapsulationKeyError",
