@@ -13,6 +13,11 @@ zeroize = { version = "1.7", features = ["derive"] }
 rand = "0.8"
 rand_core = "0.6"
 
+[features]
+# Exposes the ML-KEM `*_internal` functions that take caller-chosen randomness,
+# for vector tests only (FIPS 203 section 3.3). Never enable it in a release.
+acvp = []
+
 [dev-dependencies]
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
