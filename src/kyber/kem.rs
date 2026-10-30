@@ -28,7 +28,7 @@ where
     hash_sha3_256(&mut sk[PK_START..], pk, KYBER_PUBLICKEYBYTES);
 
     if let Some(s) = _seed {
-        sk[SK_START..].copy_from_slice(&s.1)
+        sk[SK_START..].copy_from_slice(s.1)
     } else {
         _rng.fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES]);
     }
@@ -50,7 +50,7 @@ where
     let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
 
     if let Some(s) = _seed {
-        randbuf[..KYBER_SYMBYTES].copy_from_slice(&s);
+        randbuf[..KYBER_SYMBYTES].copy_from_slice(s);
     } else {
         _rng.fill_bytes(&mut randbuf);
     }
@@ -136,7 +136,7 @@ where
     hash_sha3_256(&mut sk[PK_START..], pk, KYBER_512_PUBLICKEYBYTES);
 
     if let Some(s) = _seed {
-        sk[SK_START..].copy_from_slice(&s.1)
+        sk[SK_START..].copy_from_slice(s.1)
     } else {
         _rng.fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES]);
     }
@@ -158,7 +158,7 @@ where
     let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
 
     if let Some(s) = _seed {
-        randbuf[..KYBER_SYMBYTES].copy_from_slice(&s);
+        randbuf[..KYBER_SYMBYTES].copy_from_slice(s);
     } else {
         _rng.fill_bytes(&mut randbuf);
     }
@@ -244,7 +244,7 @@ where
     hash_sha3_256(&mut sk[PK_START..], pk, KYBER_1024_PUBLICKEYBYTES);
 
     if let Some(s) = _seed {
-        sk[SK_START..].copy_from_slice(&s.1)
+        sk[SK_START..].copy_from_slice(s.1)
     } else {
         _rng.fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES]);
     }
@@ -266,7 +266,7 @@ where
     let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
 
     if let Some(s) = _seed {
-        randbuf[..KYBER_SYMBYTES].copy_from_slice(&s);
+        randbuf[..KYBER_SYMBYTES].copy_from_slice(s);
     } else {
         _rng.fill_bytes(&mut randbuf);
     }

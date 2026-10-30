@@ -1,3 +1,5 @@
+// Matrix and index loops follow the reference C code; see poly.rs.
+#![allow(clippy::needless_range_loop, clippy::identity_op)]
 use super::error::KyberError;
 use super::params::*;
 use super::poly::*;
@@ -116,7 +118,7 @@ where
     let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
 
     if let Some(s) = _seed {
-        randbuf[..KYBER_SYMBYTES].copy_from_slice(&s.0);
+        randbuf[..KYBER_SYMBYTES].copy_from_slice(s.0);
     } else {
         _rng.fill_bytes(&mut randbuf[..KYBER_SYMBYTES]);
     }
@@ -298,7 +300,7 @@ where
     let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
 
     if let Some(s) = _seed {
-        randbuf[..KYBER_SYMBYTES].copy_from_slice(&s.0);
+        randbuf[..KYBER_SYMBYTES].copy_from_slice(s.0);
     } else {
         _rng.fill_bytes(&mut randbuf[..KYBER_SYMBYTES]);
     }
@@ -482,7 +484,7 @@ where
     let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
 
     if let Some(s) = _seed {
-        randbuf[..KYBER_SYMBYTES].copy_from_slice(&s.0);
+        randbuf[..KYBER_SYMBYTES].copy_from_slice(s.0);
     } else {
         _rng.fill_bytes(&mut randbuf[..KYBER_SYMBYTES]);
     }
