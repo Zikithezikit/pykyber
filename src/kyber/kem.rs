@@ -7,7 +7,7 @@ use super::params::*;
 use super::symmetric::{hash_sha3_256, hash_sha3_512, shake256_kdf};
 use super::verify::{cmov, verify};
 use rand_core::{CryptoRng, RngCore};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 pub fn crypto_kem_keypair<R>(
     pk: &mut [u8],
@@ -30,7 +30,14 @@ where
     if let Some(s) = _seed {
         sk[SK_START..].copy_from_slice(s.1)
     } else {
-        _rng.fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES]);
+        if _rng
+            .try_fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES])
+            .is_err()
+        {
+            // sk already holds the IND-CPA secret key; do not hand it back.
+            sk.zeroize();
+            return Err(KyberError::RandomBytesGeneration);
+        }
     }
     Ok(())
 }
@@ -47,15 +54,16 @@ where
 {
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
+    let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
 
     if let Some(s) = _seed {
         randbuf[..KYBER_SYMBYTES].copy_from_slice(s);
     } else {
-        _rng.fill_bytes(&mut randbuf);
+        _rng.try_fill_bytes(&mut randbuf[..])
+            .map_err(|_| KyberError::RandomBytesGeneration)?;
     }
 
-    hash_sha3_256(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_256(&mut buf, &randbuf[..], KYBER_SYMBYTES);
     hash_sha3_256(&mut buf[KYBER_SYMBYTES..], pk, KYBER_PUBLICKEYBYTES);
     hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
 
@@ -138,7 +146,14 @@ where
     if let Some(s) = _seed {
         sk[SK_START..].copy_from_slice(s.1)
     } else {
-        _rng.fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES]);
+        if _rng
+            .try_fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES])
+            .is_err()
+        {
+            // sk already holds the IND-CPA secret key; do not hand it back.
+            sk.zeroize();
+            return Err(KyberError::RandomBytesGeneration);
+        }
     }
     Ok(())
 }
@@ -155,15 +170,16 @@ where
 {
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
+    let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
 
     if let Some(s) = _seed {
         randbuf[..KYBER_SYMBYTES].copy_from_slice(s);
     } else {
-        _rng.fill_bytes(&mut randbuf);
+        _rng.try_fill_bytes(&mut randbuf[..])
+            .map_err(|_| KyberError::RandomBytesGeneration)?;
     }
 
-    hash_sha3_256(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_256(&mut buf, &randbuf[..], KYBER_SYMBYTES);
     hash_sha3_256(&mut buf[KYBER_SYMBYTES..], pk, KYBER_512_PUBLICKEYBYTES);
     hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
 
@@ -246,7 +262,14 @@ where
     if let Some(s) = _seed {
         sk[SK_START..].copy_from_slice(s.1)
     } else {
-        _rng.fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES]);
+        if _rng
+            .try_fill_bytes(&mut sk[SK_START..SK_START + KYBER_SYMBYTES])
+            .is_err()
+        {
+            // sk already holds the IND-CPA secret key; do not hand it back.
+            sk.zeroize();
+            return Err(KyberError::RandomBytesGeneration);
+        }
     }
     Ok(())
 }
@@ -263,15 +286,16 @@ where
 {
     let mut kr = [0u8; 2 * KYBER_SYMBYTES];
     let mut buf = [0u8; 2 * KYBER_SYMBYTES];
-    let mut randbuf = [0u8; 2 * KYBER_SYMBYTES];
+    let mut randbuf = Zeroizing::new([0u8; 2 * KYBER_SYMBYTES]);
 
     if let Some(s) = _seed {
         randbuf[..KYBER_SYMBYTES].copy_from_slice(s);
     } else {
-        _rng.fill_bytes(&mut randbuf);
+        _rng.try_fill_bytes(&mut randbuf[..])
+            .map_err(|_| KyberError::RandomBytesGeneration)?;
     }
 
-    hash_sha3_256(&mut buf, &randbuf, KYBER_SYMBYTES);
+    hash_sha3_256(&mut buf, &randbuf[..], KYBER_SYMBYTES);
     hash_sha3_256(&mut buf[KYBER_SYMBYTES..], pk, KYBER_1024_PUBLICKEYBYTES);
     hash_sha3_512(&mut kr, &buf, 2 * KYBER_SYMBYTES);
 

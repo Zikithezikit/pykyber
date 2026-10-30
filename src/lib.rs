@@ -10,10 +10,22 @@ use kyber::{
 };
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
-use rand::thread_rng;
+use rand::rngs::OsRng;
 
 fn make_kyber_error(msg: &str) -> PyErr {
     PyException::new_err(msg.to_string())
+}
+
+/// A failed OS random generator is raised as `pykyber.RandomnessError` (a
+/// `KyberError` subclass), like the ML-KEM functions do. Every other error keeps
+/// the plain exception the legacy functions have always raised.
+fn legacy_err(error: &KyberError) -> PyErr {
+    match error {
+        KyberError::RandomBytesGeneration => {
+            Python::attach(|py| pymlkem::to_py_err(py, KyberError::RandomBytesGeneration))
+        }
+        _ => make_kyber_error(&error.to_string()),
+    }
 }
 
 #[pyfunction]
@@ -24,18 +36,18 @@ fn generate_keypair(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
         }
         kyber::derive(s)
             .map(|keys| (keys.public.to_vec(), keys.secret.to_vec()))
-            .map_err(|e| make_kyber_error(&e.to_string()))
+            .map_err(|e| legacy_err(&e))
     } else {
-        let mut rng = thread_rng();
+        let mut rng = OsRng;
         keypair(&mut rng)
             .map(|keys| (keys.public.to_vec(), keys.secret.to_vec()))
-            .map_err(|e| make_kyber_error(&e.to_string()))
+            .map_err(|e| legacy_err(&e))
     }
 }
 
 #[pyfunction]
 fn generate_keypair_512(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
-    let mut rng = thread_rng();
+    let mut rng = OsRng;
     let mut pk = vec![0u8; KYBER_512_PUBLICKEYBYTES];
     let mut sk = vec![0u8; KYBER_512_SECRETKEYBYTES];
     let s_opt = if let Some(s) = seed {
@@ -48,12 +60,12 @@ fn generate_keypair_512(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
     };
     crypto_kem_keypair_512(&mut pk, &mut sk, &mut rng, s_opt)
         .map(|_| (pk, sk))
-        .map_err(|e| make_kyber_error(&e.to_string()))
+        .map_err(|e| legacy_err(&e))
 }
 
 #[pyfunction]
 fn generate_keypair_1024(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
-    let mut rng = thread_rng();
+    let mut rng = OsRng;
     let mut pk = vec![0u8; KYBER_1024_PUBLICKEYBYTES];
     let mut sk = vec![0u8; KYBER_1024_SECRETKEYBYTES];
     let s_opt = if let Some(s) = seed {
@@ -66,15 +78,15 @@ fn generate_keypair_1024(seed: Option<&[u8]>) -> PyResult<(Vec<u8>, Vec<u8>)> {
     };
     crypto_kem_keypair_1024(&mut pk, &mut sk, &mut rng, s_opt)
         .map(|_| (pk, sk))
-        .map_err(|e| make_kyber_error(&e.to_string()))
+        .map_err(|e| legacy_err(&e))
 }
 
 #[pyfunction]
 fn encapsulate_key(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
-    let mut rng = thread_rng();
+    let mut rng = OsRng;
     encapsulate(pk, &mut rng)
         .map(|(ct, ss)| (ct.to_vec(), ss.to_vec()))
-        .map_err(|e| make_kyber_error(&e.to_string()))
+        .map_err(|e| legacy_err(&e))
 }
 
 #[pyfunction]
@@ -91,12 +103,12 @@ fn encapsulate_key_512(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
             &KyberError::invalid_input("pk", KYBER_512_PUBLICKEYBYTES, pk.len()).to_string(),
         ));
     }
-    let mut rng = thread_rng();
+    let mut rng = OsRng;
     let mut ct = vec![0u8; KYBER_512_CIPHERTEXTBYTES];
     let mut ss = vec![0u8; 32];
     crypto_kem_enc_512(&mut ct, &mut ss, pk, &mut rng, None)
         .map(|_| (ct, ss))
-        .map_err(|e| make_kyber_error(&e.to_string()))
+        .map_err(|e| legacy_err(&e))
 }
 
 #[pyfunction]
@@ -106,12 +118,12 @@ fn encapsulate_key_1024(pk: &[u8]) -> PyResult<(Vec<u8>, Vec<u8>)> {
             &KyberError::invalid_input("pk", KYBER_1024_PUBLICKEYBYTES, pk.len()).to_string(),
         ));
     }
-    let mut rng = thread_rng();
+    let mut rng = OsRng;
     let mut ct = vec![0u8; KYBER_1024_CIPHERTEXTBYTES];
     let mut ss = vec![0u8; 32];
     crypto_kem_enc_1024(&mut ct, &mut ss, pk, &mut rng, None)
         .map(|_| (ct, ss))
-        .map_err(|e| make_kyber_error(&e.to_string()))
+        .map_err(|e| legacy_err(&e))
 }
 
 #[pyfunction]

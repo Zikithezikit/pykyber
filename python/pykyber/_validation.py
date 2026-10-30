@@ -32,6 +32,9 @@ def _validate_encapsulate(fn: Callable[[bytes], Tuple[bytes, bytes]], expected_p
         _validate_pk(pk, expected_pk_size, method_name)
         try:
             return fn(pk)
+        except KyberError:
+            # Keep the subclass, e.g. RandomnessError when the OS generator fails.
+            raise
         except Exception as e:
             raise KyberError(str(e)) from None
     return wrapper
@@ -63,6 +66,8 @@ def _validate_keypair(fn: Callable[[Optional[bytes]], Tuple[bytes, bytes]]) -> C
         _validate_seed(seed)
         try:
             return fn(seed)
+        except KyberError:
+            raise
         except Exception as e:
             raise KyberError(str(e)) from None
     return wrapper
