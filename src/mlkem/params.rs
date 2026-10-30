@@ -27,7 +27,7 @@ const fn encoded_bytes(d: usize) -> usize {
 
 /// Bytes PRF_eta must produce for one noise polynomial: 2 * eta bits per
 /// coefficient (FIPS 203 Algorithm 8, input of 64 * eta bytes).
-const fn prf_bytes(eta: usize) -> usize {
+pub(crate) const fn prf_bytes(eta: usize) -> usize {
     KYBER_N * 2 * eta / u8::BITS as usize
 }
 
