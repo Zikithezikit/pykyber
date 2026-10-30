@@ -8,3 +8,6 @@ __pycache__/
 
 # Opencode
 .opencode/
+
+# External test vectors, fetched by scripts/fetch_vectors.py
+tests/vectors/external/
