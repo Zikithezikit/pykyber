@@ -89,6 +89,8 @@
 
 #[cfg(test)]
 mod acvp_tests;
+#[cfg(test)]
+mod cctv_tests;
 pub mod check;
 pub mod compress;
 pub mod ct;
