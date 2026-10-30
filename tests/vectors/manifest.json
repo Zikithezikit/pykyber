@@ -5,7 +5,8 @@
     "directory": "gen-val/json-files",
     "files": {
       "ML-KEM-keyGen-FIPS203/internalProjection.json": "d7a62a2c3476957f56dd8d24f9004ea6776ccfe995ffe71a65bb9506dc9c7b1b",
-      "ML-KEM-encapDecap-FIPS203/internalProjection.json": "a556952ce869bb89c3a3196a701dad89647c193a34c86eafb61a9d710d5b810f"
+      "ML-KEM-encapDecap-FIPS203/internalProjection.json": "a556952ce869bb89c3a3196a701dad89647c193a34c86eafb61a9d710d5b810f",
+      "ML-KEM-encapDecap-FIPS203-tr1/internalProjection.json": "5e88fbd351dc2915b2ab399f5dffd269e1cdbdd0186103ab0e90b374cf592187"
     }
   }
 }
