@@ -35,6 +35,16 @@ These apply to any value derived from a secret key, seed, `m`, `r`, noise, a dec
 - Validate sizes in `_validation.py` before calling Rust; raise `KyberError` (or a subclass), never a bare `Exception`.
 - Kyber and ML-KEM keys have identical sizes. Never accept an object from one family in the other's methods.
 
+## Constants, not magic numbers
+
+Applies to all new code, Rust and Python, tests included.
+
+- Give every number a name unless its meaning is obvious on the line. `0`, `1`, `x / 2`, and a loop over the 8 bits of a byte are fine. A bit width, a size, a modulus, a shift, a multiplier, an offset, a count of rounds or inputs, or a residue you single out is not: it gets a `const` with a doc comment saying what it is and where it comes from (a FIPS 203 table or algorithm line, or the derivation, such as "ceil(2^31 / q)").
+- Derive instead of retyping. Build sizes from the constants that already exist (`KYBER_N`, `KYBER_Q`, `KYBER_POLYBYTES`, `KYBER_SYMBYTES`) and from type widths (`u8::BITS`, `i16::BITS - 1`), so a size such as 1568 or a shift of 15 is never written out. If the same literal appears twice, it needs a name.
+- Prefer a loop or accumulator driven by a named width over hand-unrolled shifts with a different literal on every line.
+- Exceptions: a function or test that transcribes a spec algorithm, formula or table line by line may keep the standard's own literals if a comment names the algorithm and lines. Expected values in test vectors, PRNG seeds, and the values in the parameter tables themselves (one match arm per set, commented with the table) are data, not magic numbers.
+- Legacy code under `src/kyber/` mirrors the reference C and is frozen. Do not tidy its literals as a drive-by; that would be its own refactor, checked against the golden vectors.
+
 ## Workflow
 
 - Branch from `dev-v2` as `wp<N>-<short-name>`, and open every PR against `dev-v2`. Never target `main` or `dev`: the maintainer merges `dev-v2` into `main` once, when 2.0 is done.
@@ -113,6 +123,7 @@ Check at least: everything in the constant-time rules above; KyberSlash (divisio
 - [ ] Secret intermediates zeroized on all paths
 - [ ] Inputs validated before secret-dependent work
 - [ ] No new runtime deps; no unsafe; no panics on untrusted input
+- [ ] No magic numbers: sizes, widths, multipliers and counts are named, documented constants
 - [ ] Tests added (vectors for crypto); fmt/clippy/test/pytest green on every commit (`git rebase --exec`)
 - [ ] Review fixes folded into the commits they fix (no "fix review" commits); rebased on current `dev-v2`
 - [ ] CHANGELOG updated (if user-visible)
