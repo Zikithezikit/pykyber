@@ -4,6 +4,10 @@
 # CI runs this per commit via `git rebase --exec scripts/check.sh <base>`.
 set -euo pipefail
 
+# External vectors (never committed). CI runs this script from the tip over
+# older commits too, so skip it where the script does not exist yet.
+if [ -f scripts/fetch_vectors.py ]; then python scripts/fetch_vectors.py; fi
+
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo test --locked --no-fail-fast
