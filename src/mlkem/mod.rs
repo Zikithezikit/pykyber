@@ -99,3 +99,5 @@ pub mod kpke;
 pub mod params;
 pub mod polyvec;
 pub mod sample;
+#[cfg(test)]
+mod wycheproof_tests;
