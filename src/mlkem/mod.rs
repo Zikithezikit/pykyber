@@ -39,7 +39,7 @@
 //! - Compress_11 (`polyvec_compress_1024`): the multiplier 10321345 >> 35 is
 //!   not exact for d = 11 and is off by one at the residues 1875 and 3125.
 //!   Kyber-1024 output must not change (applying the fix makes the golden
-//!   vector test fail), so ML-KEM-1024 uses `compress::poly_compress_d11`,
+//!   vector test fail), so ML-KEM-1024 uses `compress::poly_compress` with d = 11,
 //!   with `((x << 11) + 1664) * 645084 >> 31`. That multiplier is checked
 //!   against FIPS 203 (4.7) for every residue; the pq-crystals reference
 //!   implementation also uses it. Decompress_11 in the legacy code is exact.
@@ -60,7 +60,7 @@
 //! rustc 1.95, `--release`, inspected with objdump (x86_64) and `--emit asm`
 //! (aarch64-linux-android): `poly_tomsg`, `poly_compress`, `poly_compress_1024`,
 //! `polyvec_compress`, `polyvec_compress_1024`, `poly_tobytes` and
-//! `compress::poly_compress_d11` (x86_64 only) contain no division, and every
+//! `compress::poly_compress` with d = 11 (x86_64 only) contain no division, and every
 //! conditional branch compares a length, a loop counter or a bounds check, never
 //! a coefficient. `sha3_256` and `sha3_512` keep the stores that zero their
 //! state. This is not the WP-8 gate: armv7 and i686 are not covered and the
