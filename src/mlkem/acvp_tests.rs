@@ -5,8 +5,11 @@
 //! vectors pin `ek_PKE` and `dk_PKE` through `kpke`, and the whole `(ek, dk)`
 //! through `kem::acvp::keygen_internal`. The encapDecap vectors run
 //! `encaps_internal` and `decaps_internal` (Algorithms 17 and 18) and the key
-//! checks of FIPS 203 sections 7.2 and 7.3. A missing file fails the test: run
-//! the fetch script.
+//! checks of FIPS 203 sections 7.2 and 7.3. The `FIPS203-tr1` encapDecap
+//! revision (a new test revision against the same standard, ACVP ML-KEM draft
+//! section 5) adds cases for the same functions plus decapsulation groups whose
+//! key is given as the seed `d || z`. A missing file fails the test: run the
+//! fetch script.
 
 use super::check::{check_dk, check_ek};
 use super::kem::acvp;
@@ -20,6 +23,7 @@ use serde_json::Value;
 const ACVP_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/vectors/external/acvp/");
 const KEYGEN_FILE: &str = "ML-KEM-keyGen-FIPS203/internalProjection.json";
 const ENCAP_DECAP_FILE: &str = "ML-KEM-encapDecap-FIPS203/internalProjection.json";
+const TR1_FILE: &str = "ML-KEM-encapDecap-FIPS203-tr1/internalProjection.json";
 /// Hex digits per byte.
 const HEX_DIGITS_PER_BYTE: usize = 2;
 const HEX_RADIX: u32 = 16;
@@ -58,11 +62,24 @@ fn g(input: &[u8]) -> Vec<u8> {
     out
 }
 
-/// Run `check::<K>` for the groups of `function` (None for keyGen groups).
+/// Run `check` for the groups of `function` (None for keyGen groups).
 fn for_groups(file: &str, function: Option<&str>, check: fn(usize, &Value) -> usize) -> usize {
+    for_groups_where(
+        file,
+        |group| function.is_none() || group["function"].as_str() == function,
+        check,
+    )
+}
+
+/// Run `check` for the groups of `file` that `wanted` accepts; returns the case count.
+fn for_groups_where(
+    file: &str,
+    wanted: impl Fn(&Value) -> bool,
+    check: fn(usize, &Value) -> usize,
+) -> usize {
     let mut cases = 0;
     for group in load(file)["testGroups"].as_array().unwrap() {
-        if function.is_some() && group["function"].as_str() != function {
+        if !wanted(group) {
             continue;
         }
         let k = match group["parameterSet"].as_str().unwrap() {
@@ -197,6 +214,62 @@ fn key_checks_match_acvp() {
         by_k!(key_check_case, k, t, true)
     });
     let dk_cases = for_groups(ENCAP_DECAP_FILE, Some("decapsulationKeyCheck"), |k, t| {
+        by_k!(key_check_case, k, t, false)
+    });
+    assert_eq!((ek_cases, dk_cases), (3 * 10, 3 * 10));
+}
+
+/// The tr1 groups of `function` whose `keyFormat` is `key_format`.
+fn tr1_cases(function: &str, key_format: &str, check: fn(usize, &Value) -> usize) -> usize {
+    for_groups_where(
+        TR1_FILE,
+        |group| group["function"] == function && group["keyFormat"] == key_format,
+        check,
+    )
+}
+
+#[test]
+fn tr1_encaps_internal_matches_acvp() {
+    let cases = tr1_cases("encapsulation", "none", |k, t| {
+        by_k!(encaps_internal_case, k, t)
+    });
+    assert_eq!(cases, 3 * 25);
+}
+
+#[test]
+fn tr1_decaps_internal_matches_acvp_expanded_keys() {
+    let cases = tr1_cases("decapsulation", "expanded", |k, t| {
+        by_k!(decaps_internal_case, k, t)
+    });
+    assert_eq!(cases, 3 * 10);
+}
+
+/// A seed-form key is `d || z`; the expanded `dk` is what Algorithm 16 makes of
+/// it, so the vector's `dk` must equal `keygen_internal(d, z)` and decapsulating
+/// with that key must give the vector's `k`.
+fn decaps_seed_case<const K: usize>(t: &Value) -> usize {
+    let (ek, dk) = acvp::keygen_internal::<K>(&seed(t, "d"), &seed(t, "z"));
+    assert_eq!(ek, hex(t, "ek"), "tcId {}", t["tcId"]);
+    assert_eq!(dk.to_vec(), hex(t, "dk"), "tcId {}", t["tcId"]);
+    let k = acvp::decaps_internal::<K>(&dk, &hex(t, "c")).unwrap();
+    assert_eq!(*k, hex(t, "k")[..], "tcId {}", t["tcId"]);
+    1
+}
+
+#[test]
+fn tr1_decaps_internal_matches_acvp_seed_keys() {
+    let cases = tr1_cases("decapsulation", "seed", |k, t| {
+        by_k!(decaps_seed_case, k, t)
+    });
+    assert_eq!(cases, 3 * 10);
+}
+
+#[test]
+fn tr1_key_checks_match_acvp() {
+    let ek_cases = tr1_cases("encapsulationKeyCheck", "none", |k, t| {
+        by_k!(key_check_case, k, t, true)
+    });
+    let dk_cases = tr1_cases("decapsulationKeyCheck", "expanded", |k, t| {
         by_k!(key_check_case, k, t, false)
     });
     assert_eq!((ek_cases, dk_cases), (3 * 10, 3 * 10));
