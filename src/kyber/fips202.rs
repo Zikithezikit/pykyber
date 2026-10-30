@@ -361,6 +361,7 @@ pub fn sha3_256(h: &mut [u8], input: &[u8], inlen: usize) {
     for i in 0..4 {
         store_u64(&mut h[8 * i..], s[i]);
     }
+    s.zeroize();
 }
 
 pub fn sha3_512(h: &mut [u8], input: &[u8], inlen: usize) {
@@ -370,6 +371,7 @@ pub fn sha3_512(h: &mut [u8], input: &[u8], inlen: usize) {
     for i in 0..8 {
         store_u64(&mut h[8 * i..], s[i]);
     }
+    s.zeroize();
 }
 
 fn keccak_finalize(s: &mut [u64], pos: usize, r: usize, p: u8) {
