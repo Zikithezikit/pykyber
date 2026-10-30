@@ -2,12 +2,15 @@
 //! files, fetched by `scripts/fetch_vectors.py` and never committed).
 //!
 //! KeyGen_internal (Algorithm 16) starts with K-PKE.KeyGen(d), so the keyGen
-//! vectors pin `ek_PKE` and `dk_PKE`. Encaps_internal (Algorithm 17) and
-//! Decaps_internal (Algorithm 18) call K-PKE.Encrypt and K-PKE.Decrypt around
-//! the hashes G and H; the glue below is test-only and the real Encaps and
-//! Decaps come later. A missing file fails the test: run the fetch script.
+//! vectors pin `ek_PKE` and `dk_PKE` through `kpke`, and the whole `(ek, dk)`
+//! through `kem::acvp::keygen_internal`. The encapDecap vectors run
+//! `encaps_internal` and `decaps_internal` (Algorithms 17 and 18) and the key
+//! checks of FIPS 203 sections 7.2 and 7.3. A missing file fails the test: run
+//! the fetch script.
 
-use super::kpke::{decrypt, encrypt, keygen};
+use super::check::{check_dk, check_ek};
+use super::kem::acvp;
+use super::kpke::{encrypt, keygen};
 use super::params::{MlKem1024, MlKem512, MlKem768, ParamSet};
 use crate::kyber::fips202::{sha3_256, sha3_512};
 use crate::kyber::params::KYBER_SYMBYTES;
@@ -129,33 +132,72 @@ fn k_pke_encrypt_matches_acvp_encapsulation() {
     assert_eq!(cases, 3 * 25);
 }
 
-/// Algorithm 18 steps 1-9 without the implicit-rejection output: decrypt, derive
-/// (K', r'), re-encrypt and compare. Returns 1 for a valid ciphertext whose K'
-/// equals the expected shared secret, 0 for a modified one, for which the
-/// expected secret is J(z || c) and so must differ from K'.
-fn decaps_case<const K: usize>(t: &Value) -> usize {
-    let (dk, c, expected) = (hex(t, "dk"), hex(t, "c"), hex(t, "k"));
-    let (dk_pke, rest) = dk.split_at(ParamSet::<K>::DK_PKE_BYTES);
-    let (ek, rest) = rest.split_at(ParamSet::<K>::EK_BYTES);
-    let hash = &rest[..SEED_BYTES];
-    let m = decrypt::<K>(dk_pke, &c).unwrap();
-    let kr = g(&[&m[..], hash].concat());
-    let r = kr[SEED_BYTES..].try_into().unwrap();
-    let c_again = encrypt::<K>(ek, &m, &r).unwrap();
-    if c_again == c {
-        assert_eq!(kr[..SEED_BYTES], expected, "tcId {}", t["tcId"]);
-        1
-    } else {
-        assert_ne!(kr[..SEED_BYTES], expected, "tcId {}", t["tcId"]);
-        0
-    }
+/// Algorithm 17 end to end: `encaps_internal(ek, m)` gives `(k, c)`.
+fn encaps_internal_case<const K: usize>(t: &Value) -> usize {
+    let (k, c) = acvp::encaps_internal::<K>(&hex(t, "ek"), &seed(t, "m")).unwrap();
+    assert_eq!(*k, hex(t, "k")[..], "tcId {}", t["tcId"]);
+    assert_eq!(c, hex(t, "c"), "tcId {}", t["tcId"]);
+    1
 }
 
 #[test]
-fn k_pke_decrypt_matches_acvp_decapsulation() {
-    let valid = for_groups(ENCAP_DECAP_FILE, Some("decapsulation"), |k, t| {
-        by_k!(decaps_case, k, t)
+fn encaps_internal_matches_acvp() {
+    let cases = for_groups(ENCAP_DECAP_FILE, Some("encapsulation"), |k, t| {
+        by_k!(encaps_internal_case, k, t)
+    });
+    assert_eq!(cases, 3 * 25);
+}
+
+/// Algorithm 16 end to end: `keygen_internal(d, z)` gives the whole `(ek, dk)`.
+fn keygen_internal_case<const K: usize>(t: &Value) -> usize {
+    let (ek, dk) = acvp::keygen_internal::<K>(&seed(t, "d"), &seed(t, "z"));
+    assert_eq!(ek, hex(t, "ek"), "tcId {}", t["tcId"]);
+    assert_eq!(dk.to_vec(), hex(t, "dk"), "tcId {}", t["tcId"]);
+    1
+}
+
+#[test]
+fn keygen_internal_matches_acvp() {
+    let cases = for_groups(KEYGEN_FILE, None, |k, t| by_k!(keygen_internal_case, k, t));
+    assert_eq!(cases, 3 * 25);
+}
+
+/// Algorithm 18: the expected secret is `K'` for a valid ciphertext and
+/// `J(z || c)` for a modified one, so one equality covers both.
+fn decaps_internal_case<const K: usize>(t: &Value) -> usize {
+    let k = acvp::decaps_internal::<K>(&hex(t, "dk"), &hex(t, "c")).unwrap();
+    assert_eq!(*k, hex(t, "k")[..], "tcId {}", t["tcId"]);
+    1
+}
+
+#[test]
+fn decaps_internal_matches_acvp() {
+    let cases = for_groups(ENCAP_DECAP_FILE, Some("decapsulation"), |k, t| {
+        by_k!(decaps_internal_case, k, t)
     });
     // Five valid and five modified ciphertexts in each of the three groups.
-    assert_eq!(valid, 3 * 5);
+    assert_eq!(cases, 3 * 10);
+}
+
+/// Sections 7.2 and 7.3: `testPassed` says whether the check accepts the key.
+fn key_check_case<const K: usize>(t: &Value, encapsulation: bool) -> usize {
+    let passed = t["testPassed"].as_bool().unwrap();
+    let result = if encapsulation {
+        check_ek::<K>(&hex(t, "ek"))
+    } else {
+        check_dk::<K>(&hex(t, "dk"))
+    };
+    assert_eq!(result.is_ok(), passed, "tcId {}: {result:?}", t["tcId"]);
+    1
+}
+
+#[test]
+fn key_checks_match_acvp() {
+    let ek_cases = for_groups(ENCAP_DECAP_FILE, Some("encapsulationKeyCheck"), |k, t| {
+        by_k!(key_check_case, k, t, true)
+    });
+    let dk_cases = for_groups(ENCAP_DECAP_FILE, Some("decapsulationKeyCheck"), |k, t| {
+        by_k!(key_check_case, k, t, false)
+    });
+    assert_eq!((ek_cases, dk_cases), (3 * 10, 3 * 10));
 }
