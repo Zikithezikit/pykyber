@@ -4,8 +4,8 @@ build-backend = "maturin"
 
 [project]
 name = "pykyber"
-version = "1.0.5"
-description = "Kyber post-quantum key encapsulation in Rust"
+version = "2.0.0"
+description = "ML-KEM (FIPS 203) post-quantum key encapsulation in Rust, with legacy Kyber"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "Unlicense"}
@@ -28,7 +28,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/Zikithezikit/pykyber"
-Documentation = "https://github.com/Zikithezikit/pykyber/tree/v1.0.5/docs"
+Documentation = "https://github.com/Zikithezikit/pykyber/tree/v2.0.0/docs"
 Repository = "https://github.com/Zikithezikit/pykyber"
 Issues = "https://github.com/Zikithezikit/pykyber/issues"
 
