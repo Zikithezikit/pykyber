@@ -11,7 +11,7 @@
 //! accumulator or the mask is and turning the select back into a branch (the
 //! pattern behind CVE-2024-37880, "Clangover"). It is best effort, so the release
 //! assembly is checked (see the PR for WP-3 and the gate of WP-8). This is not
-//! `kyber::verify`, which has no barrier and trusts a caller-supplied length.
+//! `kyber::verify`, which trusts a caller-supplied length.
 
 use crate::kyber::params::KYBER_SSBYTES;
 use core::hint::black_box;
