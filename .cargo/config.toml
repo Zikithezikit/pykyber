@@ -1,0 +1,8 @@
+# `cargo test` links the test binaries, and with pyo3's extension-module
+# feature on macOS the Python symbols are left to the interpreter at load
+# time. maturin passes these flags itself for wheels; plain cargo does not.
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
