@@ -16,7 +16,7 @@ git clone https://github.com/Zikithezikit/pykyber
 cd pykyber
 python -m venv .venv
 source .venv/bin/activate
-pip install maturin pytest
+pip install -r requirements-dev.txt
 maturin develop          # builds the Rust extension into .venv
 pip install -e .
 ```
@@ -27,23 +27,20 @@ pip install -e .
 maturin develop                 # rebuild the .so after any Rust change
 pytest python/tests             # Python tests (needs the built .so)
 cargo fmt --check               # formatting
-cargo clippy --all-targets      # lints (~59 pre-existing diagnostics are being cleared in 2.0)
+cargo clippy --all-targets -- -D warnings   # lints
 cargo test --no-fail-fast       # Rust unit + integration tests
 make dev-build                  # clean + rebuild + regenerate python/pykyber/_pykyber.pyi
 make benchmark                  # performance-tests/benchmark.py
 ```
 
-Known baseline failures being fixed as part of 2.0 (issues #5 and #7):
-`tests/unit_params.rs::test_kyber_1024_params` fails, and `cargo clippy` has
-~59 pre-existing diagnostics. Don't fix unrelated baseline failures inside a
-feature PR.
-
 These commands are the gate for every PR:
 
 ```bash
-cargo fmt --check && cargo clippy --all-targets -- -D warnings \
-  && cargo test --no-fail-fast && pytest python/tests
+scripts/check.sh   # fmt, clippy -D warnings, cargo test, maturin develop, pytest
 ```
+
+CI runs the same checks on Linux, macOS and Windows, and again on every commit of
+a PR (`git rebase --exec scripts/check.sh origin/dev-v2`).
 
 ## Branching and PRs
 
