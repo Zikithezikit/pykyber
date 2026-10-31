@@ -2,7 +2,7 @@
 
 You are working on **pykyber**, a post-quantum KEM library: an in-house Rust implementation (no third-party crypto at runtime) with PyO3 bindings, released under MIT OR Apache-2.0 (version 1.0.5 was released under the Unlicense). People will run your code to protect real secrets. A test that passes is necessary but not sufficient; code that is correct but leaks timing is a vulnerability.
 
-Current work: the 2.0 release (GitHub issue #3), planned in `PLAN-2.0.md`. Read the work package (WP) you are assigned before you start.
+Current work: the 2.0 release (GitHub issue #3), split into work packages (WPs), the sub-issues of #3. Read the WP you are assigned before you start.
 
 ## Non-negotiables
 
@@ -90,7 +90,13 @@ If you touched secret-handling code, also complete the PR checklist below and in
 
 Standards and advisories change. At the start of each WP, and whenever you rely on a spec detail or a vulnerability claim:
 
-1. Check the primary sources listed in `PLAN-2.0.md` §9 (FIPS 203, SP 800-227, ACVP, C2SP/Wycheproof, NVD/GHSA/RustSec, pqc-forum).
+1. Check the primary sources:
+   - FIPS 203 (final) and errata: <https://csrc.nist.gov/pubs/fips/203/final>
+   - SP 800-227 (KEM recommendations): <https://csrc.nist.gov/pubs/sp/800/227/final>
+   - ACVP ML-KEM spec and vectors: <https://pages.nist.gov/ACVP/draft-celi-acvp-ml-kem.html>, <https://github.com/usnistgov/ACVP-Server>
+   - C2SP CCTV ML-KEM: <https://c2sp.org/CCTV/ML-KEM>; Wycheproof: <https://github.com/C2SP/wycheproof>
+   - Advisories: NVD <https://nvd.nist.gov/vuln/search>, GitHub Advisory DB <https://github.com/advisories>, RustSec <https://rustsec.org>
+   - NIST pqc-forum: <https://groups.google.com/a/list.nist.gov/g/pqc-forum>
 2. Record in the PR: source URL, date checked, and what you found (including "no change").
 3. Treat blogs, news, and search-engine summaries as leads. Confirm on the primary source before acting on them, and label anything unconfirmed as such.
 4. External test vectors are never committed. They're downloaded at test time from a pinned commit and checked against `tests/vectors/manifest.json` (SHA-256). Don't silently change a pin or a hash.

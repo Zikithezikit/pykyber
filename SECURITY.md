@@ -53,8 +53,7 @@ pykyber; social engineering.
 
 Audits and hardening work performed on this codebase are logged here so the
 history of known issues and their resolutions stays visible to every
-contributor. Ongoing 2.0 security work is planned in `PLAN-2.0.md`
-(WP-8/WP-9) and tracked issue-by-issue.
+contributor. Ongoing 2.0 security work is tracked issue-by-issue.
 
 The log below was migrated on 2026-10-29 from
 `.opencode/SECURITY.md`, a maintainer/agent working log that was
@@ -288,7 +287,7 @@ to the maintainer. `zeroize`, `rand_core`, `getrandom`, `rand_chacha`: none.
 - Ciphertext compare covers the full ciphertext (see CVE-2026-6330 below).
 - KyberSlash scan: see the table.
 
-## CVE and paper review (PLAN-2.0.md section 9)
+## CVE and paper review
 
 Dates are 2026-10-30. "Primary" means the issuing page or the paper itself.
 

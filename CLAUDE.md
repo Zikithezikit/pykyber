@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PyKyber: a Python package (`pykyber`) exposing round-3 CRYSTALS-Kyber, implemented from scratch in Rust (its own Keccak/FIPS 202, NTT, etc.; no external crypto crate) and bound with PyO3 + maturin (abi3, Python ≥3.8). MIT OR Apache-2.0 from 2.0 (version 1.0.5 was released under the Unlicense). Current version 1.0.5; the version lives in both `Cargo.toml` and `pyproject.toml`, so keep them in sync.
 
-Active work is 2.0 (issue #3): add ML-KEM (FIPS 203) beside the legacy Kyber classes. The plan, the work packages and the verified spec facts are in `PLAN-2.0.md`.
+Active work is 2.0 (issue #3): add ML-KEM (FIPS 203) beside the legacy Kyber classes. The work packages are the sub-issues of #3.
 
 ## Commands
 
@@ -49,7 +49,7 @@ Official vectors (WP-4, merged): the manifest pins ACVP, C2SP CCTV and Wycheproo
 
 Other locations: docs are in `docs/` (`api.md`, `index.md`), the benchmark is in `performance-tests/`, and `CHANGELOG.md` is maintained by hand.
 
-`.opencode/` (another agent tool's notes, including a `SECURITY.md` log of past fixes: constant-time division removal, Kyber-512 η1=3) is **gitignored**, so other contributors don't have it. PLAN-2.0 WP-0 migrates that log to a root `SECURITY.md`.
+`.opencode/` (another agent tool's notes, including a `SECURITY.md` log of past fixes: constant-time division removal, Kyber-512 η1=3) is **gitignored**, so other contributors don't have it. That log was migrated to the root `SECURITY.md`.
 
 ## Repo state
 
