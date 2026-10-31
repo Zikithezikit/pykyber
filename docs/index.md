@@ -9,4 +9,4 @@
 - [README](../README.md): installation and quick start
 - [CHANGELOG](../CHANGELOG.md): release history
 - [SECURITY](../SECURITY.md): reporting policy and findings log
-- [LICENSE-MIT](../LICENSE-MIT) and [LICENSE-APACHE](../LICENSE-APACHE): use either one (releases up to 1.0.5 were Unlicense)
+- [LICENSE-MIT](../LICENSE-MIT) and [LICENSE-APACHE](../LICENSE-APACHE): use either one (version 1.0.5 was released under the Unlicense)

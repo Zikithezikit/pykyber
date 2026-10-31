@@ -1,6 +1,6 @@
 # AGENTS.md — instructions for AI coding agents
 
-You are working on **pykyber**, a post-quantum KEM library: an in-house Rust implementation (no third-party crypto at runtime) with PyO3 bindings, released under MIT OR Apache-2.0 (the 1.x releases were Unlicense). People will run your code to protect real secrets. A test that passes is necessary but not sufficient; code that is correct but leaks timing is a vulnerability.
+You are working on **pykyber**, a post-quantum KEM library: an in-house Rust implementation (no third-party crypto at runtime) with PyO3 bindings, released under MIT OR Apache-2.0 (version 1.0.5 was released under the Unlicense). People will run your code to protect real secrets. A test that passes is necessary but not sufficient; code that is correct but leaks timing is a vulnerability.
 
 Current work: the 2.0 release (GitHub issue #3), planned in `PLAN-2.0.md`. Read the work package (WP) you are assigned before you start.
 

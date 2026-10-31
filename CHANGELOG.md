@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- License: PyKyber is now licensed under MIT OR Apache-2.0, at the user's option (`LICENSE-MIT`, `LICENSE-APACHE`; `license = "MIT OR Apache-2.0"` in `Cargo.toml` and `pyproject.toml`). Releases up to 1.0.5 were published under the Unlicense and remain available under it. The `LICENSE` file and the "License :: Public Domain" classifier are gone.
+- License: PyKyber is now licensed under MIT OR Apache-2.0, at the user's option (`LICENSE-MIT`, `LICENSE-APACHE`; `license = "MIT OR Apache-2.0"` in `Cargo.toml` and `pyproject.toml`). Version 1.0.5 was released under the Unlicense, and it still is. The `LICENSE` file and the "License :: Public Domain" classifier are gone.
 
 - Docs: the README is now only install, quick start, sizes, performance and the Kyber deprecation note; the rest moved to `docs/`, and the new `docs/enterprise.md` covers licensing, dependencies, supply chain, security status and support for companies. Earlier: the README is shorter and rewritten in plain prose. The benchmark (`performance-tests/benchmark.py`) now times `ML_KEM_*` as well as the Kyber classes on a release build, writes `results.json`, and draws two charts (`latency.png`, `ml_kem_vs_kyber.png`) that replace the four old ones. The old README figures were for the Kyber classes only. `make benchmark` builds the release extension first, and the chart dependency is in `performance-tests/requirements.txt`.
 
