@@ -15,7 +15,7 @@ Agents and contributors working on this plan must also follow `AGENTS.md`.
 | Docs/examples point at ML-KEM | WP-7 | README, `docs/`, examples use ML-KEM; Kyber marked deprecated |
 | Security pass (recent CVEs + side channels), written up in `SECURITY.md` | WP-8 (gate items), WP-9 (full pass) | `SECURITY.md` at repo root with findings log |
 | Don't break the current API | all | No removed/renamed public names; existing tests unchanged |
-| Rust backend stays ours, Unlicense | all | No new **runtime** crypto dependencies; dev-only deps allowed for testing |
+| Rust backend stays ours, MIT OR Apache-2.0 (was Unlicense) | all | No new **runtime** crypto dependencies; dev-only deps allowed for testing |
 | Move default branch to `main` | Release | Maintainer merges `dev-v2` into `main` at the end; GitHub default = `main`, protected |
 | May trade some speed for side-channel resistance | WP-8/9 | Benchmarks recorded before/after each hardening PR |
 

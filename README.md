@@ -129,4 +129,13 @@ make benchmark
 
 ## License
 
-This is free and unencumbered software released into the public domain. See [LICENSE](LICENSE) or <https://unlicense.org>.
+PyKyber is licensed under either of
+
+- the Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE)), or
+- the MIT license ([LICENSE-MIT](LICENSE-MIT)),
+
+at your option.
+
+Releases up to 1.0.5 were published under the Unlicense, and those releases stay available under it.
+
+Unless you say otherwise, any contribution you submit to the project is licensed under the same two licenses, without extra terms or conditions.

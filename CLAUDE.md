@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-PyKyber: a Python package (`pykyber`) exposing round-3 CRYSTALS-Kyber, implemented from scratch in Rust (its own Keccak/FIPS 202, NTT, etc.; no external crypto crate) and bound with PyO3 + maturin (abi3, Python ≥3.8). Unlicense. Current version 1.0.5; the version lives in both `Cargo.toml` and `pyproject.toml`, so keep them in sync.
+PyKyber: a Python package (`pykyber`) exposing round-3 CRYSTALS-Kyber, implemented from scratch in Rust (its own Keccak/FIPS 202, NTT, etc.; no external crypto crate) and bound with PyO3 + maturin (abi3, Python ≥3.8). MIT OR Apache-2.0 from 2.0 (releases up to 1.0.5 were Unlicense). Current version 1.0.5; the version lives in both `Cargo.toml` and `pyproject.toml`, so keep them in sync.
 
 Active work is 2.0 (issue #3): add ML-KEM (FIPS 203) beside the legacy Kyber classes. The plan, the work packages and the verified spec facts are in `PLAN-2.0.md`.
 
