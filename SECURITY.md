@@ -26,7 +26,7 @@ What helps us triage fastest:
 
 ## Response and disclosure
 
-- This is an independently maintained, unfunded, public-domain project: we
+- This is an independently maintained, unfunded, open-source project: we
   acknowledge reports on a best-effort basis, aiming for a few days.
 - We prefer coordinated disclosure. We will keep you informed, credit you in
   the advisory if you wish (including anonymously is fine), and publish the
