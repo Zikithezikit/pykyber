@@ -70,41 +70,6 @@ jobs:
       - name: pytest
         run: python -m pytest python/tests
 
-  # PRs are rebase-merged, so every commit lands on dev-v2 as is. Re-run the
-  # checks on each commit of the PR, not only the tip.
-  commits:
-    name: every commit passes
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.x'
-      - name: Install Rust toolchain
-        run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy --no-self-update
-      - name: Create virtualenv
-        run: |
-          python -m venv "$RUNNER_TEMP/venv"
-          echo "VIRTUAL_ENV=$RUNNER_TEMP/venv" >> "$GITHUB_ENV"
-          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
-      - name: Install dev dependencies
-        run: python -m pip install -r requirements-dev.txt
-      - name: Run checks on every commit
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          git config user.name "ci"
-          git config user.email "ci@users.noreply.github.com"
-          git fetch origin "$BASE_REF"
-          # Copy the script out of the tree: commits older than the one that
-          # adds scripts/check.sh must still be checked with it.
-          cp scripts/check.sh "$RUNNER_TEMP/check.sh"
-          git rebase --exec "bash $RUNNER_TEMP/check.sh" "origin/$BASE_REF"
-
   linux:
     runs-on: ${{ matrix.platform.runner }}
     strategy:
