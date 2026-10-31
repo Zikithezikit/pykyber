@@ -4,8 +4,8 @@ PyKyber is a post-quantum KEM library: round-3 CRYSTALS-Kyber, implemented
 from scratch in Rust (no third-party crypto at runtime) and exposed to Python
 through PyO3. A 2.0 release adds ML-KEM (FIPS 203) beside the legacy Kyber
 API. This file covers how to work on the repo; `AGENTS.md` is the binding
-rulebook for humans *and* AI agents, and `PLAN-2.0.md` tracks the 2.0 work
-packages.
+rulebook for humans *and* AI agents. The 2.0 work packages are the
+sub-issues of #3.
 
 ## Development setup
 
@@ -48,7 +48,7 @@ All 2.0 development happens on **`dev-v2`**. The default branch is still
 `dev` until the 2.0 release; `main` is the stable release branch. During 2.0:
 
 - Branch from `dev-v2` as `wp<N>-<short-name>` (e.g. `wp3-mlkem-keygen`),
-  where `N` is the work-package number from `PLAN-2.0.md` / the linked sub-issue of #3.
+  where `N` is the work-package number of the linked sub-issue of #3.
 - Open every PR **against `dev-v2`**. Never target `main` or `dev`.
 - One work package (or less) per PR. Crypto PRs should stay under ~400
   changed lines excluding vector files.
