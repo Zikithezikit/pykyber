@@ -122,6 +122,13 @@ The full rules are in `AGENTS.md`; the ones most often violated:
   for reading and output comparison in dev-only tests. Their code is never
   copied into this repo.
 
+## Licensing
+
+PyKyber is licensed under MIT OR Apache-2.0, at the user's option. Unless you
+say otherwise, a contribution you submit is licensed the same way, without extra
+terms. Do not paste in code under another license, and never copy code from the
+other implementations listed above.
+
 ## Reporting security issues
 
 Do not open a public issue for security problems. Use GitHub's private
