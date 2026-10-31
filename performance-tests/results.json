@@ -1,0 +1,113 @@
+{
+  "machine": {
+    "cpu": "Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz",
+    "os": "Linux-7.0.0-42-generic-x86_64-with-glibc2.43",
+    "python": "3.14.4",
+    "iterations": 500,
+    "rounds": 7
+  },
+  "results": {
+    "ML_KEM_512": {
+      "keypair": {
+        "median_ms": 0.03084688,
+        "min_ms": 0.030227022,
+        "max_ms": 0.031714176
+      },
+      "encapsulate": {
+        "median_ms": 0.036884415999999996,
+        "min_ms": 0.034839664,
+        "max_ms": 0.037238023999999995
+      },
+      "decapsulate": {
+        "median_ms": 0.045211512,
+        "min_ms": 0.044502955999999996,
+        "max_ms": 0.046178892
+      }
+    },
+    "ML_KEM_768": {
+      "keypair": {
+        "median_ms": 0.052071804,
+        "min_ms": 0.051858684,
+        "max_ms": 0.05341931
+      },
+      "encapsulate": {
+        "median_ms": 0.05827729,
+        "min_ms": 0.057428306,
+        "max_ms": 0.060119014000000005
+      },
+      "decapsulate": {
+        "median_ms": 0.071233474,
+        "min_ms": 0.069818558,
+        "max_ms": 0.072420324
+      }
+    },
+    "ML_KEM_1024": {
+      "keypair": {
+        "median_ms": 0.08183407000000001,
+        "min_ms": 0.079728936,
+        "max_ms": 0.085947734
+      },
+      "encapsulate": {
+        "median_ms": 0.08870694,
+        "min_ms": 0.08488179,
+        "max_ms": 0.09071324400000001
+      },
+      "decapsulate": {
+        "median_ms": 0.105884678,
+        "min_ms": 0.10320048600000001,
+        "max_ms": 0.113365562
+      }
+    },
+    "Kyber512": {
+      "keypair": {
+        "median_ms": 0.03262543,
+        "min_ms": 0.031415108,
+        "max_ms": 0.034500692
+      },
+      "encapsulate": {
+        "median_ms": 0.03986382,
+        "min_ms": 0.039075866,
+        "max_ms": 0.04647873
+      },
+      "decapsulate": {
+        "median_ms": 0.041719248,
+        "min_ms": 0.040897228,
+        "max_ms": 0.04311243
+      }
+    },
+    "Kyber768": {
+      "keypair": {
+        "median_ms": 0.055750828,
+        "min_ms": 0.053028982,
+        "max_ms": 0.05862622
+      },
+      "encapsulate": {
+        "median_ms": 0.06226379,
+        "min_ms": 0.058065872000000004,
+        "max_ms": 0.074707204
+      },
+      "decapsulate": {
+        "median_ms": 0.063505224,
+        "min_ms": 0.061659314,
+        "max_ms": 0.066696846
+      }
+    },
+    "Kyber1024": {
+      "keypair": {
+        "median_ms": 0.08775699,
+        "min_ms": 0.083874044,
+        "max_ms": 0.095251412
+      },
+      "encapsulate": {
+        "median_ms": 0.095971828,
+        "min_ms": 0.094348506,
+        "max_ms": 0.10051261199999999
+      },
+      "decapsulate": {
+        "median_ms": 0.10352679799999999,
+        "min_ms": 0.095782972,
+        "max_ms": 0.108335928
+      }
+    }
+  }
+}

@@ -1,238 +1,246 @@
 #!/usr/bin/env python3
-"""Performance benchmarking and graphing script for pykyber.
+"""Time ML-KEM and the legacy Kyber classes, then draw the charts in the README.
 
-This script runs the performance tests from python/tests/test_kyber.py
-and generates graphs from the results.
+Run it against a release build, because a debug build is many times slower:
+
+    maturin develop --release
+    python performance-tests/benchmark.py
+
+It writes results.json, latency.png and ml_kem_vs_kyber.png next to itself and
+prints the table that the README shows. Needs matplotlib (see requirements-dev.txt).
 """
 
-import subprocess
-import re
-import matplotlib.pyplot as plt
+import json
+import platform
+import statistics
+import sys
+import time
+import warnings
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+
+import pykyber  # noqa: E402
+
+HERE = Path(__file__).resolve().parent
+
+# Each round times ITERATIONS calls and the median of ROUNDS rounds is reported,
+# so one slow round (a scheduler hiccup, a frequency change) does not decide the number.
+ITERATIONS = 500
+ROUNDS = 7
+WARMUP_CALLS = 200
+
+LEVELS = ("512", "768", "1024")
+OPERATIONS = ("keypair", "encapsulate", "decapsulate")
+OPERATION_LABELS = {
+    "keypair": "Key generation",
+    "encapsulate": "Encapsulation",
+    "decapsulate": "Decapsulation",
+}
+FAMILIES = {"ML-KEM": "ML_KEM_{}", "Kyber": "Kyber{}"}
+
+NS_PER_MS = 1_000_000
+MS_PER_S = 1_000
+
+# Okabe-Ito blue, vermillion and green. They pass scripts/validate_palette.js from the
+# dataviz skill on a white surface (colour-blind separation and 3:1 contrast).
+OPERATION_COLORS = {"keypair": "#0072B2", "encapsulate": "#D55E00", "decapsulate": "#009E73"}
+INK = "#1f2328"
+MUTED = "#59636e"
+GRID = "#d1d9e0"
+DPI = 150
+# Opacity of the Kyber bars, so they read as the secondary series next to ML-KEM.
+KYBER_ALPHA = 0.45
 
 
-def run_performance_tests():
-    """Run pytest performance tests and parse results."""
-    result = subprocess.run(
-        ['.venv/bin/python', '-m', 'pytest', 
-         'python/tests/test_kyber.py', 
-         '-v', '-k', 'performance', 
-         '--tb=no', '-q', '-s'],
-        capture_output=True,
-        text=True
-    )
-    
-    output = result.stdout + result.stderr
-    
-    results = {
-        'Kyber512': {},
-        'Kyber768': {},
-        'Kyber1024': {}
+def time_rounds(call):
+    """Milliseconds per call for each round."""
+    for _ in range(WARMUP_CALLS):
+        call()
+    rounds = []
+    for _ in range(ROUNDS):
+        start = time.perf_counter_ns()
+        for _ in range(ITERATIONS):
+            call()
+        rounds.append((time.perf_counter_ns() - start) / ITERATIONS / NS_PER_MS)
+    return rounds
+
+
+def bench_class(cls):
+    """Time one class through its public API, with static calls for the receiver steps."""
+    keypair = cls()
+    public_key = keypair.public_key
+    secret_key = keypair.secret_key
+    ciphertext = cls.encapsulate(public_key).ciphertext
+    calls = {
+        "keypair": lambda: cls(),
+        "encapsulate": lambda: cls.encapsulate(public_key),
+        "decapsulate": lambda: cls.decapsulate(ciphertext, secret_key),
     }
-    
-    pattern = r'Kyber(\d+)\s+(keypair generation|encapsulation|decapsulation|full key exchange.*?):\s+([\d.]+)\s+ms/op'
-    
-    for match in re.finditer(pattern, output):
-        variant = f"Kyber{match.group(1)}"
-        operation = match.group(2).strip()
-        time_ms = float(match.group(3))
-        
-        if 'keypair generation' in operation:
-            results[variant]['keypair'] = time_ms
-        elif 'encapsulation' in operation:
-            results[variant]['encapsulate'] = time_ms
-        elif 'decapsulation' in operation:
-            results[variant]['decapsulate'] = time_ms
-        elif 'class API' in operation:
-            results[variant]['class_api'] = time_ms
-        elif 'static methods' in operation:
-            results[variant]['static_methods'] = time_ms
-    
+    return {op: time_rounds(calls[op]) for op in OPERATIONS}
+
+
+def run():
+    results = {}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # the Kyber classes warn once per process
+        for pattern in FAMILIES.values():
+            for level in LEVELS:
+                name = pattern.format(level)
+                print(f"timing {name} ...", flush=True)
+                rounds = bench_class(getattr(pykyber, name))
+                results[name] = {
+                    op: {
+                        "median_ms": statistics.median(values),
+                        "min_ms": min(values),
+                        "max_ms": max(values),
+                    }
+                    for op, values in rounds.items()
+                }
     return results
 
 
-def create_comparison_chart(results):
-    """Create a comparison chart across all variants and operations."""
-    variants = ['Kyber512', 'Kyber768', 'Kyber1024']
-    
-    x = range(len(variants))
-    width = 0.25
-    
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    keypair_times = [results[v]['keypair'] for v in variants]
-    encapsulate_times = [results[v]['encapsulate'] for v in variants]
-    decapsulate_times = [results[v]['decapsulate'] for v in variants]
-    
-    bars1 = ax.bar([i - width for i in x], keypair_times, width, label='Keypair Generation', color='#2ecc71')
-    bars2 = ax.bar(x, encapsulate_times, width, label='Encapsulation', color='#3498db')
-    bars3 = ax.bar([i + width for i in x], decapsulate_times, width, label='Decapsulation', color='#e74c3c')
-    
-    ax.set_xlabel('Kyber Variant', fontsize=12)
-    ax.set_ylabel('Time (ms)', fontsize=12)
-    ax.set_title('PyKyber Performance Comparison', fontsize=14, fontweight='bold')
-    ax.set_xticks(x)
-    ax.set_xticklabels(variants)
-    ax.legend()
-    ax.grid(axis='y', alpha=0.3)
-    
-    for bars in [bars1, bars2, bars3]:
-        for bar in bars:
-            height = bar.get_height()
-            ax.annotate(f'{height:.2f}',
-                       xy=(bar.get_x() + bar.get_width() / 2, height),
-                       xytext=(0, 3),
-                       textcoords="offset points",
-                       ha='center', va='bottom', fontsize=8)
-    
-    plt.tight_layout()
-    plt.savefig('performance-tests/performance_comparison.png', dpi=150)
-    print("Saved: performance-tests/performance_comparison.png")
-    plt.close()
+def machine_info():
+    cpu = platform.processor() or platform.machine()
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                cpu = line.split(":", 1)[1].strip()
+                break
+    except OSError:
+        pass
+    return {
+        "cpu": cpu,
+        "os": platform.platform(),
+        "python": platform.python_version(),
+        "iterations": ITERATIONS,
+        "rounds": ROUNDS,
+    }
 
 
-def create_operation_breakdown(results):
-    """Create individual charts for each operation."""
-    variants = ['Kyber512', 'Kyber768', 'Kyber1024']
-    colors = ['#2ecc71', '#3498db', '#e74c3c']
-    
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    
-    operations = ['keypair', 'encapsulate', 'decapsulate']
-    titles = ['Keypair Generation', 'Encapsulation', 'Decapsulation']
-    
-    for idx, (op, title) in enumerate(zip(operations, titles)):
-        times = [results[v][op] for v in variants]
-        bars = axes[idx].bar(variants, times, color=colors)
-        axes[idx].set_title(title, fontsize=12, fontweight='bold')
-        axes[idx].set_ylabel('Time (ms)')
-        axes[idx].grid(axis='y', alpha=0.3)
-        
-        for bar in bars:
-            height = bar.get_height()
-            axes[idx].annotate(f'{height:.2f}',
-                             xy=(bar.get_x() + bar.get_width() / 2, height),
-                             xytext=(0, 3),
-                             textcoords="offset points",
-                             ha='center', va='bottom', fontsize=10)
-    
-    plt.tight_layout()
-    plt.savefig('performance-tests/operation_breakdown.png', dpi=150)
-    print("Saved: performance-tests/operation_breakdown.png")
-    plt.close()
+def footnote(info):
+    return (
+        f"{info['cpu']}, Python {info['python']}, release build. "
+        f"Median of {info['rounds']} rounds of {info['iterations']} calls."
+    )
 
 
-def create_scalability_chart(results):
-    """Create a chart showing how performance scales with security level."""
-    variants = ['Kyber512', 'Kyber768', 'Kyber1024']
-    security_levels = ['~AES-128', '~AES-192', '~AES-256']
-    
-    keypair_times = [results[v]['keypair'] for v in variants]
-    encapsulate_times = [results[v]['encapsulate'] for v in variants]
-    decapsulate_times = [results[v]['decapsulate'] for v in variants]
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    x = range(len(variants))
-    
-    ax.plot(x, keypair_times, 'o-', linewidth=2, markersize=8, label='Keypair Generation', color='#2ecc71')
-    ax.plot(x, encapsulate_times, 's-', linewidth=2, markersize=8, label='Encapsulation', color='#3498db')
-    ax.plot(x, decapsulate_times, '^-', linewidth=2, markersize=8, label='Decapsulation', color='#e74c3c')
-    
-    ax.set_xticks(x)
-    ax.set_xticklabels([f'{v}\n({s})' for v, s in zip(variants, security_levels)])
-    ax.set_xlabel('Kyber Variant (Security Level)', fontsize=12)
-    ax.set_ylabel('Time (ms)', fontsize=12)
-    ax.set_title('PyKyber Performance Scalability', fontsize=14, fontweight='bold')
-    ax.legend()
-    ax.grid(alpha=0.3)
-    
-    for i, variant in enumerate(variants):
-        for j, (data, label) in enumerate([(keypair_times, 'keypair'), 
-                                            (encapsulate_times, 'encapsulate'), 
-                                            (decapsulate_times, 'decapsulate')]):
-            ax.annotate(f'{data[i]:.2f}', 
-                       (i, data[i]), 
-                       textcoords="offset points", 
-                       xytext=(0, 10), 
-                       ha='center', fontsize=8)
-    
-    plt.tight_layout()
-    plt.savefig('performance-tests/scalability.png', dpi=150)
-    print("Saved: performance-tests/scalability.png")
-    plt.close()
+def style(ax):
+    ax.set_facecolor("white")
+    ax.grid(axis="y", color=GRID, linewidth=0.8)
+    ax.set_axisbelow(True)
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color(GRID)
+    ax.tick_params(colors=MUTED, length=0)
 
 
-def create_throughput_chart(results):
-    """Create a throughput chart showing operations per second."""
-    variants = ['Kyber512', 'Kyber768', 'Kyber1024']
-    
-    keypair_ops = [1000 / results[v]['keypair'] for v in variants]
-    encapsulate_ops = [1000 / results[v]['encapsulate'] for v in variants]
-    decapsulate_ops = [1000 / results[v]['decapsulate'] for v in variants]
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    x = range(len(variants))
-    width = 0.25
-    
-    bars1 = ax.bar([i - width for i in x], keypair_ops, width, label='Keypair Generation', color='#2ecc71')
-    bars2 = ax.bar(x, encapsulate_ops, width, label='Encapsulation', color='#3498db')
-    bars3 = ax.bar([i + width for i in x], decapsulate_ops, width, label='Decapsulation', color='#e74c3c')
-    
-    ax.set_xlabel('Kyber Variant', fontsize=12)
-    ax.set_ylabel('Operations per Second', fontsize=12)
-    ax.set_title('PyKyber Throughput (Operations per Second)', fontsize=14, fontweight='bold')
-    ax.set_xticks(x)
-    ax.set_xticklabels(variants)
-    ax.legend()
-    ax.grid(axis='y', alpha=0.3)
-    
-    for bars in [bars1, bars2, bars3]:
-        for bar in bars:
-            height = bar.get_height()
-            ax.annotate(f'{int(height)}',
-                       xy=(bar.get_x() + bar.get_width() / 2, height),
-                       xytext=(0, 3),
-                       textcoords="offset points",
-                       ha='center', va='bottom', fontsize=8)
-    
-    plt.tight_layout()
-    plt.savefig('performance-tests/throughput.png', dpi=150)
-    print("Saved: performance-tests/throughput.png")
-    plt.close()
+def latency_chart(results, info):
+    """Time per call for the three ML-KEM sets, one bar per operation."""
+    names = [f"ML_KEM_{level}" for level in LEVELS]
+    fig, ax = plt.subplots(figsize=(9, 5), facecolor="white")
+    style(ax)
+    width = 0.26
+    gap = 0.02
+    for j, op in enumerate(OPERATIONS):
+        xs = [i + (j - 1) * (width + gap) for i in range(len(names))]
+        medians = [results[n][op]["median_ms"] for n in names]
+        below = [results[n][op]["median_ms"] - results[n][op]["min_ms"] for n in names]
+        above = [results[n][op]["max_ms"] - results[n][op]["median_ms"] for n in names]
+        bars = ax.bar(xs, medians, width, color=OPERATION_COLORS[op], label=OPERATION_LABELS[op])
+        ax.errorbar(xs, medians, yerr=[below, above], fmt="none", ecolor=INK, elinewidth=1, capsize=3)
+        for bar, value, top in zip(bars, medians, (results[n][op]["max_ms"] for n in names)):
+            # Label above the whisker, so the number never sits on the line.
+            ax.annotate(f"{value:.3f}", (bar.get_x() + bar.get_width() / 2, top),
+                        xytext=(0, 4), textcoords="offset points", ha="center",
+                        fontsize=8, color=INK)
+    ax.set_xticks(range(len(names)))
+    ax.set_xticklabels([f"ML-KEM-{level}" for level in LEVELS], color=INK, fontsize=11)
+    ax.set_ylabel("milliseconds per call (lower is faster)", color=MUTED)
+    ax.set_title("ML-KEM time per operation", loc="left", color=INK, fontsize=14,
+                 fontweight="bold")
+    ax.legend(frameon=False, loc="upper left", labelcolor=INK)
+    fig.text(0.01, 0.01, footnote(info) + " Whiskers show the fastest and slowest round.",
+             fontsize=7, color=MUTED)
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    fig.savefig(HERE / "latency.png", dpi=DPI, facecolor="white")
+    plt.close(fig)
 
 
-def print_summary(results):
-    """Print a summary table of results."""
-    print("\n" + "=" * 60)
-    print("PyKyber Performance Summary (100 iterations each)")
-    print("=" * 60)
-    print(f"{'Variant':<12} {'Keypair (ms)':<15} {'Encapsulate (ms)':<18} {'Decapsulate (ms)':<18}")
-    print("-" * 60)
-    for variant in ['Kyber512', 'Kyber768', 'Kyber1024']:
-        r = results[variant]
-        print(f"{variant:<12} {r['keypair']:<15.3f} {r['encapsulate']:<18.3f} {r['decapsulate']:<18.3f}")
-    print("=" * 60)
-    
-    print("\nThroughput (operations/second):")
-    print("-" * 60)
-    print(f"{'Variant':<12} {'Keypair/s':<15} {'Encapsulate/s':<18} {'Decapsulate/s':<18}")
-    print("-" * 60)
-    for variant in ['Kyber512', 'Kyber768', 'Kyber1024']:
-        r = results[variant]
-        kp_ops = int(1000 / r['keypair'])
-        enc_ops = int(1000 / r['encapsulate'])
-        dec_ops = int(1000 / r['decapsulate'])
-        print(f"{variant:<12} {kp_ops:<15} {enc_ops:<18} {dec_ops:<18}")
-    print("=" * 60)
+def comparison_chart(results, info):
+    """Operations per second, ML-KEM against the deprecated Kyber classes."""
+    fig, axes = plt.subplots(1, 3, figsize=(12, 4.8), facecolor="white")
+    width = 0.36
+    gap = 0.02
+    for ax, op in zip(axes, OPERATIONS):
+        style(ax)
+        for j, (family, pattern) in enumerate(FAMILIES.items()):
+            xs = [i + (j - 0.5) * (width + gap) for i in range(len(LEVELS))]
+            rates = [MS_PER_S / results[pattern.format(level)][op]["median_ms"] for level in LEVELS]
+            is_kyber = family == "Kyber"
+            bars = ax.bar(xs, rates, width, color=OPERATION_COLORS[op],
+                          alpha=KYBER_ALPHA if is_kyber else 1.0,
+                          hatch="///" if is_kyber else "", edgecolor="white", linewidth=0)
+            for bar, value in zip(bars, rates):
+                ax.annotate(f"{value:,.0f}", (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                            xytext=(0, 4), textcoords="offset points", ha="center",
+                            fontsize=7.5, color=INK)
+        ax.set_xticks(range(len(LEVELS)))
+        ax.set_xticklabels(LEVELS, color=INK)
+        ax.set_title(OPERATION_LABELS[op], loc="left", color=INK, fontsize=12, fontweight="bold")
+    axes[0].set_ylabel("operations per second (higher is faster)", color=MUTED)
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, facecolor=MUTED),
+        plt.Rectangle((0, 0), 1, 1, facecolor=MUTED, alpha=KYBER_ALPHA, hatch="///",
+                      edgecolor="white"),
+    ]
+    fig.legend(handles, ["ML-KEM (solid)", "Kyber, deprecated (hatched)"], frameon=False,
+               loc="upper right", labelcolor=INK, ncol=2)
+    fig.suptitle("ML-KEM and the legacy Kyber classes", x=0.01, ha="left", color=INK,
+                 fontsize=14, fontweight="bold")
+    fig.text(0.01, 0.01, footnote(info) + " Axis labels are the parameter set (512, 768, 1024).",
+             fontsize=7, color=MUTED)
+    fig.tight_layout(rect=(0, 0.03, 1, 0.94))
+    fig.savefig(HERE / "ml_kem_vs_kyber.png", dpi=DPI, facecolor="white")
+    plt.close(fig)
 
 
-if __name__ == '__main__':
-    print("Running performance tests from python/tests/test_kyber.py...")
-    results = run_performance_tests()
-    print_summary(results)
-    create_comparison_chart(results)
-    create_operation_breakdown(results)
-    create_scalability_chart(results)
-    create_throughput_chart(results)
-    print("\nAll graphs saved in performance-tests/")
+def markdown_table(results):
+    lines = [
+        "| Class | Key generation | Encapsulation | Decapsulation |",
+        "|-------|----------------|---------------|---------------|",
+    ]
+    for family, pattern in FAMILIES.items():
+        for level in LEVELS:
+            name = pattern.format(level)
+            cells = []
+            for op in OPERATIONS:
+                ms = results[name][op]["median_ms"]
+                cells.append(f"{ms:.3f} ms ({MS_PER_S / ms:,.0f}/s)")
+            label = f"`ML_KEM_{level}`" if family == "ML-KEM" else f"`Kyber{level}`"
+            lines.append(f"| {label} | " + " | ".join(cells) + " |")
+    return "\n".join(lines)
+
+
+def main():
+    if not hasattr(pykyber, "ML_KEM_768"):
+        sys.exit("this pykyber build has no ML-KEM; build the 2.0 branch with maturin develop --release")
+    info = machine_info()
+    results = run()
+    (HERE / "results.json").write_text(
+        json.dumps({"machine": info, "results": results}, indent=2) + "\n", encoding="ascii"
+    )
+    latency_chart(results, info)
+    comparison_chart(results, info)
+    print()
+    print(footnote(info))
+    print()
+    print(markdown_table(results))
+    print("\nWrote results.json, latency.png and ml_kem_vs_kyber.png in", HERE)
+
+
+if __name__ == "__main__":
+    main()
