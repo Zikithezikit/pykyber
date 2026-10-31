@@ -15,4 +15,5 @@ clean:
 	rm -rf ./target/
 
 benchmark:
+	.venv/bin/maturin develop --release
 	.venv/bin/python performance-tests/benchmark.py

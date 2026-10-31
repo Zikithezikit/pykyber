@@ -1,0 +1,3 @@
+# Only needed to draw the benchmark charts (make benchmark).
+# matplotlib 3.7 is the last line that supports Python 3.8.
+matplotlib>=3.7
