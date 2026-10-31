@@ -39,8 +39,7 @@ These commands are the gate for every PR:
 scripts/check.sh   # fmt, clippy -D warnings, cargo test, maturin develop, pytest
 ```
 
-CI runs the same checks on Linux, macOS and Windows, and again on every commit of
-a PR (`git rebase --exec scripts/check.sh origin/dev-v2`).
+CI runs the same checks on Linux, macOS and Windows.
 
 ## Branching and PRs
 
