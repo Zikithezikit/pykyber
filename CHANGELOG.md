@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Docs: added the PyKyber logo (`docs/assets/logo.png`, plus a mono variant) and show it at the top of the README.
 - License: PyKyber is now licensed under MIT OR Apache-2.0, at the user's option (`LICENSE-MIT`, `LICENSE-APACHE`; `license = "MIT OR Apache-2.0"` in `Cargo.toml` and `pyproject.toml`). Version 1.0.5 was released under the Unlicense, and it still is. The `LICENSE` file and the "License :: Public Domain" classifier are gone.
 
 - CI: removed the `every commit passes` job. The `test` job still runs on every PR and push.
