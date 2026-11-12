@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="PyKyber" width="400">
+</p>
+
 # PyKyber
 
 Post-quantum key encapsulation for Python: ML-KEM (FIPS 203), written in Rust with no third-party crypto crate and no Python dependencies. Licensed MIT OR Apache-2.0.
